@@ -21,4 +21,4 @@ cd frontend
 
 ## 👥 Integrantes
 - Martin Alloatti
-- (tu compañero)
+- Alan Benelli
