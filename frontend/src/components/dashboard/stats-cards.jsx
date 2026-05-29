@@ -32,7 +32,7 @@ change: "-0.32%",
 
 function StatsCards() {
 return ( <Grid container spacing={3}>
-{stats.map((item) => ( <Grid item xs={12} md={6} lg={3} key={item.title}>
+{stats.map((item) => ( <Grid size={{ xs: 12, md: 6, lg: 3 }} key={item.title}>
 <Card
 sx={{
 backgroundColor: "#15181e",

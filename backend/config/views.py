@@ -5,5 +5,5 @@ from rest_framework.response import Response
 @api_view(['GET'])
 def hola(request):
     return Response({
-        'mensaje': 'Hola React!'
+        'mensaje': 'Datos recibidos desde DJANGO!'
     })

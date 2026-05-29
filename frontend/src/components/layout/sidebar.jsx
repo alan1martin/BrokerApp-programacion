@@ -15,6 +15,7 @@ import ShowChartIcon from "@mui/icons-material/ShowChart";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import SettingsIcon from "@mui/icons-material/Settings";
+
 import { Link } from "react-router-dom";
 
 const drawerWidth = 240;
@@ -47,36 +48,20 @@ icon: <SettingsIcon />,
 },
 ];
 
-
-function Sidebar() {
-return (
-<Drawer
-variant="permanent"
-sx={{
-width: drawerWidth,
-flexShrink: 0,
-"& .MuiDrawer-paper": {
-width: drawerWidth,
-boxSizing: "border-box",
-backgroundColor: "#15181e",
-borderRight: "1px solid #222",
-},
-}}
->
-
-
-BrokerApp
-
-
-
+function Sidebar({ mobileOpen, onClose }) {
+const drawerContent = (
+<> <Toolbar> <Typography variant="h5" fontWeight={700}>
+BrokerApp </Typography> </Toolbar>
 
   <Box sx={{ overflow: "auto" }}>
     <List>
       {menuItems.map((item) => (
         <ListItemButton
-              key={item.text}
-              component={Link}
-              to={item.path}>
+          key={item.text}
+          component={Link}
+          to={item.path}
+          onClick={onClose}
+        >
           <ListItemIcon sx={{ color: "#fff" }}>
             {item.icon}
           </ListItemIcon>
@@ -86,7 +71,60 @@ BrokerApp
       ))}
     </List>
   </Box>
-</Drawer>
+</>
+
+);
+
+return (
+<>
+{/* Desktop Sidebar */}
+<Drawer
+variant="permanent"
+sx={{
+display: {
+xs: "none",
+md: "block",
+},
+
+
+      width: drawerWidth,
+      flexShrink: 0,
+
+      "& .MuiDrawer-paper": {
+        width: drawerWidth,
+        boxSizing: "border-box",
+        backgroundColor: "#15181e",
+        borderRight: "1px solid #222",
+      },
+    }}
+  >
+    {drawerContent}
+  </Drawer>
+
+  {/* Mobile Sidebar */}
+  <Drawer
+    variant="temporary"
+    open={mobileOpen}
+    onClose={onClose}
+    ModalProps={{
+      keepMounted: true,
+    }}
+    sx={{
+      display: {
+        xs: "block",
+        md: "none",
+      },
+
+      "& .MuiDrawer-paper": {
+        width: drawerWidth,
+        backgroundColor: "#15181e",
+      },
+    }}
+  >
+    {drawerContent}
+  </Drawer>
+</>
+
 
 );
 }

@@ -47,8 +47,10 @@ Watchlist </Typography>
       {stocks.map((stock) => (
         <Box
           key={stock.symbol}
-          display="flex"
-          justifyContent="space-between"
+          sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          }}
         >
           <Box>
             <Typography fontWeight={700}>
