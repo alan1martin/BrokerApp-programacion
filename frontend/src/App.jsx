@@ -4,6 +4,8 @@ import {
   Route,
 } from "react-router-dom";
 
+import ProtectedRoute from "./components/auth/protected-route";
+
 import DashboardLayout from "./layouts/dashboard-layout";
 
 import DashboardPage from "./pages/dashboard-page";
@@ -15,16 +17,21 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+
         {/* LOGIN */}
         <Route
           path="/login"
           element={<LoginPage />}
         />
 
-        {/* DASHBOARD LAYOUT */}
+        {/* RUTAS PROTEGIDAS */}
         <Route
           path="/"
-          element={<DashboardLayout />}
+          element={
+            <ProtectedRoute>
+              <DashboardLayout />
+            </ProtectedRoute>
+          }
         >
           <Route
             index
@@ -41,6 +48,7 @@ function App() {
             element={<SettingsPage />}
           />
         </Route>
+
       </Routes>
     </BrowserRouter>
   );

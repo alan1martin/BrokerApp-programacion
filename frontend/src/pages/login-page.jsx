@@ -12,6 +12,8 @@ import { useState } from "react";
 
 import { loginUser } from "../services/auth-service";
 
+import { useNavigate } from "react-router-dom";
+
 function LoginPage() {
   const [username, setUsername] =
     useState("");
@@ -22,6 +24,8 @@ function LoginPage() {
   const [loading, setLoading] =
     useState(false);
 
+  const navigate = useNavigate();
+    
   const handleLogin = async () => {
     try {
       setLoading(true);
@@ -43,7 +47,7 @@ function LoginPage() {
         data.refresh
       );
 
-      alert("Login successful 😎");
+      navigate("/");
     } catch (error) {
       console.error(error);
 
