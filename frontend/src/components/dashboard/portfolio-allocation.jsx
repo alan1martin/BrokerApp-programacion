@@ -1,113 +1,126 @@
-
 import {
-Card,
-CardContent,
-Typography,
-Stack,
-Box,
+  Card,
+  CardContent,
+  Typography,
+  Stack,
+  Box,
 } from "@mui/material";
 
-import {
-PieChart,
-Pie,
-Cell,
-ResponsiveContainer,
-Tooltip,
-} from "recharts";
+import { ResponsivePie } from "@nivo/pie";
 
 const data = [
-{ name: "Stocks", value: 55 },
-{ name: "Crypto", value: 20 },
-{ name: "ETFs", value: 15 },
-{ name: "Cash", value: 10 },
+  {
+    id: "Stocks",
+    label: "Stocks",
+    value: 55,
+  },
+  {
+    id: "Crypto",
+    label: "Crypto",
+    value: 20,
+  },
+  {
+    id: "ETFs",
+    label: "ETFs",
+    value: 15,
+  },
+  {
+    id: "Cash",
+    label: "Cash",
+    value: 10,
+  },
 ];
 
 const COLORS = [
-"#00c853",
-"#2962ff",
-"#ffab00",
-"#ff5252",
+  "#00c853",
+  "#2962ff",
+  "#ffab00",
+  "#ff5252",
 ];
 
 function PortfolioAllocation() {
-return (
-<Card
-sx={{
-backgroundColor: "#15181e",
-height: 400,
-}}
-> <CardContent> <Typography
-       variant="h6"
-       gutterBottom
-     >
-Portfolio Allocation </Typography>
-
-    <ResponsiveContainer
-      width="100%"
-      height={220}
+  return (
+    <Card
+      sx={{
+        backgroundColor: "#15181e",
+        height: 400,
+      }}
     >
-      <PieChart>
-        <Pie
-          data={data}
-          dataKey="value"
-          innerRadius={60}
-          outerRadius={90}
-          paddingAngle={4}
+      <CardContent>
+        <Typography
+          variant="h6"
+          gutterBottom
         >
-          {data.map((entry, index) => (
-            <Cell
-              key={entry.name}
-              fill={COLORS[index % COLORS.length]}
-            />
-          ))}
-        </Pie>
-        
-        <Tooltip />
-      </PieChart>
-    </ResponsiveContainer>
+          Portfolio Allocation
+        </Typography>
 
-    <Stack spacing={2} mt={2}>
-      {data.map((item, index) => (
-        <Box
-          key={item.name}
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              gap: 1,
-              alignItems: "center",
+        <Box sx={{ height: 220 }}>
+          <ResponsivePie
+            data={data}
+            margin={{
+              top: 20,
+              right: 20,
+              bottom: 20,
+              left: 20,
             }}
-          >
-            <Box
-              sx={{
-                width: 12,
-                height: 12,
-                borderRadius: "50%",
-                backgroundColor:
-                  COLORS[index % COLORS.length],
-              }}
-            />
-
-            <Typography>
-              {item.name}
-            </Typography>
-          </Box>
-
-          <Typography fontWeight={700}>
-            {item.value}%
-          </Typography>
+            innerRadius={0.7}
+            padAngle={2}
+            cornerRadius={4}
+            activeOuterRadiusOffset={8}
+            colors={COLORS}
+            enableArcLabels={false}
+            enableArcLinkLabels={false}
+            theme={{
+              tooltip: {
+                container: {
+                  background: "#15181e",
+                  color: "#fff",
+                },
+              },
+            }}
+          />
         </Box>
-      ))}
-    </Stack>
-  </CardContent>
-</Card>
 
+        <Stack spacing={2} mt={2}>
+          {data.map((item, index) => (
+            <Box
+              key={item.id}
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 1,
+                  alignItems: "center",
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: "50%",
+                    backgroundColor:
+                      COLORS[index],
+                  }}
+                />
 
-);
+                <Typography>
+                  {item.label}
+                </Typography>
+              </Box>
+
+              <Typography fontWeight={700}>
+                {item.value}%
+              </Typography>
+            </Box>
+          ))}
+        </Stack>
+      </CardContent>
+    </Card>
+  );
 }
 
 export default PortfolioAllocation;
