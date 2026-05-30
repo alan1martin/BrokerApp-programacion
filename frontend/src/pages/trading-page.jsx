@@ -14,7 +14,7 @@ import {
   CircularProgress
 } from "@mui/material";
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom"; // Captura datos de la navegación
+import { useLocation } from "react-router-dom"; 
 import { executeTrade } from "../services/portfolio-service";
 import { useMarket } from "../context/market-context.jsx";
 import TradingChart from "../components/dashboard/trading-chart";
@@ -30,7 +30,6 @@ function TradingPage() {
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null); 
 
-  // Detectamos limpiamente si venimos desde la tabla de mercados
   useEffect(() => {
     if (location.state?.defaultSymbol) {
       setSelectedSymbol(location.state.defaultSymbol);
@@ -48,7 +47,7 @@ function TradingPage() {
     setStatusMessage(null); 
   };
 
-  const handleExecuteTrade = async (e) => {
+  const handleExecuteTrade = async (e) => { 
     e.preventDefault();
     setLoading(true);
     setStatusMessage(null);
@@ -99,8 +98,10 @@ function TradingPage() {
         </Alert>
       )}
 
+      {/* Grid Contenedor v6 Nativo */}
       <Grid container spacing={3}>
-        {/* COLUMNA IZQUIERDA: Info del Activo y Gráfico */}
+        
+        {/* COLUMNA IZQUIERDA: Info del Activo y Gráfico (Usa size en vez de item) */}
         <Grid size={{ xs: 12, md: 7, lg: 8 }}>
           <Card sx={{ backgroundColor: "#15181e", height: "100%" }}>
             <CardContent>
@@ -114,7 +115,7 @@ function TradingPage() {
                 Mercado Real • Precios actualizados vía API pública
               </Typography>
               
-              {/* Gráfico Real e Interactivo de Nivo */}
+              {/* Gráfico Real de Nivo */}
               {currentAsset && (
                 <TradingChart 
                   symbol={currentAsset.symbol} 
@@ -125,7 +126,7 @@ function TradingPage() {
           </Card>
         </Grid>
 
-        {/* COLUMNA DERECHA: Formulario de Operación */}
+        {/* COLUMNA DERECHA: Formulario de Operación (Usa size en vez de item) */}
         <Grid size={{ xs: 12, md: 5, lg: 4 }}>
           <Card sx={{ backgroundColor: "#15181e" }}>
             <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
@@ -163,10 +164,10 @@ function TradingPage() {
                     ))}
                   </TextField>
 
+                  {/* Sintaxis Ultra-Limpia para evitar advertencias de DOM en MUI v6 */}
                   <TextField
                     label="Cantidad"
                     type="number"
-                    slotProps={{ htmlInput: { step: "any", min: "0" } }}
                     value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
                     disabled={loading}

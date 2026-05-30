@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ResponsiveLine } from "@nivo/line";
 import { Box, CircularProgress, useTheme } from "@mui/material";
-import axiosInstance from "../../services/api"; // Ajustá la ruta a tu Axios
+import axiosInstance from "../../services/api"; // Tu instancia de Axios configurada
 
 function TradingChart({ symbol }) {
   const theme = useTheme();
@@ -12,12 +12,19 @@ function TradingChart({ symbol }) {
     const fetchHistory = async () => {
       setLoading(true);
       try {
-        // Le pegamos a la API corporativa de Django que armamos recién
+        // Le pegamos a tu endpoint de Django
         const response = await axiosInstance.get(`/portfolio/history/${symbol}/`);
         
-        const dataPoints = response.data.data.map(item => ({
-          x: item.time,
-          y: item.price
+        // Yahoo Finance nos trae el array adentro de 'history'
+        const rawHistory = response.data?.history || [];
+
+        // Acotamos a los últimos 20 puntos para que el eje X de Nivo no se sature de texto
+        const recentHistory = rawHistory.slice(-20);
+        
+        // Mapeamos los datos con las nuevas llaves de Yahoo (date y close)
+        const dataPoints = recentHistory.map(item => ({
+          x: item.date.split(" ")[1] || item.date, // Extrae solo la hora 'HH:MM' para que quede estético
+          y: item.close
         }));
 
         setChartData([
@@ -29,13 +36,16 @@ function TradingChart({ symbol }) {
         ]);
       } catch (error) {
         console.error("Error trayendo historial del backend:", error);
+        setChartData([]); // Evita que se rompa la pantalla si falla
       } finally {
         setLoading(false);
       }
     };
 
-    fetchHistory();
-  }, [symbol]);
+    if (symbol) {
+      fetchHistory();
+    }
+  }, [symbol, theme.palette.primary.main]);
 
   if (loading) {
     return (
@@ -58,14 +68,14 @@ function TradingChart({ symbol }) {
         axisBottom={{
           tickSize: 5,
           tickPadding: 5,
-          legend: "Hora del Servidor",
+          legend: "Hora (Intervalos 15m)",
           legendOffset: 32,
           legendPosition: "middle"
         }}
         axisLeft={{
           tickSize: 5,
           tickPadding: 5,
-          format: (value) => `$${value.toLocaleString()}`
+          format: (value) => `$${value.toLocaleString("en-US", { minimumFractionDigits: 2 })}`
         }}
         enableGridX={false}
         enableGridY={true}
@@ -74,7 +84,14 @@ function TradingChart({ symbol }) {
           axis: {
             legend: { text: { fill: "#8a94a6", fontSize: 11, fontWeight: 600 } },
             ticks: { text: { fill: "#6b778c", fontSize: 10 } }
-          }
+          },
+          crosshair: {
+            line: {
+              stroke: theme.palette.primary.main,
+              strokeWidth: 1,
+              strokeDasharray: "6 6",
+            },
+          },
         }}
         colors={[theme.palette.primary.main]}
         useMesh={true}

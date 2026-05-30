@@ -9,20 +9,13 @@ import {
 } from "@mui/material";
 
 import { useState } from "react";
-
 import { loginUser } from "../services/auth-service";
-
 import { useNavigate } from "react-router-dom";
 
 function LoginPage() {
-  const [username, setUsername] =
-    useState("");
-
-  const [password, setPassword] =
-    useState("");
-
-  const [loading, setLoading] =
-    useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
     
@@ -30,27 +23,16 @@ function LoginPage() {
     try {
       setLoading(true);
 
-      const data = await loginUser(
-        username,
-        password
-      );
-
+      const data = await loginUser(username, password);
       console.log(data);
 
-      localStorage.setItem(
-        "access",
-        data.access
-      );
-
-      localStorage.setItem(
-        "refresh",
-        data.refresh
-      );
+      // Paso 3 (Ya estaba perfecto): Guardar los tokens JWT
+      localStorage.setItem("access", data.access);
+      localStorage.setItem("refresh", data.refresh);
 
       navigate("/");
     } catch (error) {
       console.error(error);
-
       alert("Invalid credentials");
     } finally {
       setLoading(false);
@@ -91,16 +73,15 @@ function LoginPage() {
               </Typography>
             </Box>
 
+            {/* Paso 2 Corregido: Se usa slotProps en vez de InputLabelProps */}
             <TextField
               label="Username"
               fullWidth
               value={username}
-              onChange={(e) =>
-                setUsername(e.target.value)
-              }
-              InputLabelProps={{
-                style: {
-                  color: "#94a3b8",
+              onChange={(e) => setUsername(e.target.value)}
+              slotProps={{
+                inputLabel: {
+                  style: { color: "#94a3b8" },
                 },
               }}
               sx={{
@@ -110,17 +91,16 @@ function LoginPage() {
               }}
             />
 
+            {/* Paso 2 Corregido: Se usa slotProps en vez de InputLabelProps */}
             <TextField
               label="Password"
               type="password"
               fullWidth
               value={password}
-              onChange={(e) =>
-                setPassword(e.target.value)
-              }
-              InputLabelProps={{
-                style: {
-                  color: "#94a3b8",
+              onChange={(e) => setPassword(e.target.value)}
+              slotProps={{
+                inputLabel: {
+                  style: { color: "#94a3b8" },
                 },
               }}
               sx={{
@@ -141,9 +121,7 @@ function LoginPage() {
                 fontWeight: 700,
               }}
             >
-              {loading
-                ? "Loading..."
-                : "Login"}
+              {loading ? "Loading..." : "Login"}
             </Button>
           </Stack>
         </CardContent>

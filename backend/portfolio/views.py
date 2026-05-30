@@ -18,36 +18,58 @@ from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_stock_history(request, symbol):
-    # Simulamos un fetch a una cotización base estable para armar una serie temporal consistente
-    prices = {
-        "AAPL": 175.50,
-        "BTC": 62000.00,
-        "TSLA": 189.44,
-        "NVDA": 901.11
-    }
-    
-    current_price = prices.get(symbol.upper(), 100.0)
-    history = []
-    now = datetime.now()
-    
-    # Generamos 12 puntos de tiempo estables directo desde el servidor
-    base = current_price * 0.97 # arrancamos un 3% abajo
-    for i in range(12, -1, -1):
-        point_time = now - timedelta(minutes=i * 15)
-        change = (random.random() - 0.48) * (base * 0.005)
-        base += change
-        
-        # Guardamos la estructura limpia
-        history.append({
-            "time": point_time.strftime("%H:%M"),
-            "price": round(base if i != 0 else current_price, 2) # el último es exacto
-        })
-        
-    return JsonResponse({"symbol": symbol.upper(), "data": history})
+import yfinance as yf
+from django.http import JsonResponse
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated]) # Protegido con JWT, igual que el resto
+def get_stock_history(request, symbol):
+    try:
+        # 1. Mapeamos símbolos si es necesario (ej: si usás BTC, Yahoo usa BTC-USD)
+        ticker_symbol = symbol.upper()
+        if ticker_symbol in ['BTC', 'ETH', 'SOL']:
+            ticker_symbol = f"{ticker_symbol}-USD"
+
+        # 2. Conectamos con Yahoo Finance
+        ticker = yf.Ticker(ticker_symbol)
+        
+        # 3. Traemos el historial de los últimos 7 días con intervalos de 15 minutos 
+        # (Ideal para ver movimientos en "tiempo real" y armar velas)
+        hist = ticker.history(period="7d", interval="15m")
+        
+        if hist.empty:
+            return JsonResponse({'error': f'No se encontraron datos para el activo {symbol}'}, status=404)
+
+        # 4. Formateamos los datos para el gráfico de React (Línea o Velas)
+        history_data = []
+        for index, row in hist.iterrows():
+            history_data.append({
+                'date': index.strftime('%Y-%m-%d %H:%M'), # Fecha y hora
+                'open': round(row['Open'], 2),
+                'high': round(row['High'], 2),
+                'low': round(row['Low'], 2),
+                'close': round(row['Close'], 2),  # Precio de cierre
+                'volume': int(row['Volume'])
+            })
+
+        # 5. Obtenemos información extra de la empresa (Nombre, Info financiera, Logo de Yahoo si hay)
+        info = ticker.info
+        company_name = info.get('longName', symbol)
+        current_price = round(info.get('currentPrice', history_data[-1]['close']), 2)
+
+        return JsonResponse({
+            'symbol': symbol.upper(),
+            'companyName': company_name,
+            'currentPrice': current_price,
+            'history': history_data
+        }, safe=False)
+
+    except Exception as e:
+        print(f"Error en get_stock_history: {str(e)}")
+        return JsonResponse({'error': 'Error interno al consultar Yahoo Finance'}, status=500)
+    
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 

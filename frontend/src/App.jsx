@@ -11,6 +11,7 @@ import MarketsPage from "./pages/markets-page";
 import SettingsPage from "./pages/settings-page";
 import LoginPage from "./pages/login-page";
 import TradingPage from "./pages/trading-page"; 
+import HistoryPage from "./pages/history-page";
 
 function App() {
   return (
@@ -51,6 +52,11 @@ function App() {
           <Route
             path="settings"
             element={<SettingsPage />}
+          />
+          
+          <Route
+              path="history"
+              element={<HistoryPage />}
           />
         </Route>
       </Routes>
