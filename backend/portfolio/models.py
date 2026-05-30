@@ -8,26 +8,38 @@ class Portfolio(models.Model):
 
     def __str__(self):
         return f"Portfolio de {self.user.username}"
-    
+
     @property
     def calculated_total_value(self):
-        # Sumamos (cantidad * precio_promedio) de cada posición que tenga este portfolio
         total = sum(pos.quantity * pos.average_price for pos in self.positions.all())
-        return total    
+        return total
 
-# ➔ AGREGÁ ESTO ACÁ ABAJO:
+
 class Position(models.Model):
     portfolio = models.ForeignKey(Portfolio, on_delete=models.CASCADE, related_name="positions")
-    symbol = models.CharField(max_length=10)  # Ej: 'AAPL', 'BTC', 'MELI'
-    quantity = models.DecimalField(max_digits=12, decimal_places=6)  # Permite fracciones (útil para criptos)
-    average_price = models.DecimalField(max_digits=12, decimal_places=2)  # Precio promedio de compra
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        # Evita que el mismo portafolio tenga la misma acción duplicada en filas distintas
-        unique_together = ('portfolio', 'symbol') 
+    # ➔ CORREGIDO: Le sacamos el max_digits que sobraba acá:
+    symbol = models.CharField(max_length=10) # Ej: AAPL, BTC
+    quantity = models.DecimalField(max_digits=15, decimal_places=6, default=0.00)
+    average_price = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
 
     def __str__(self):
-        return f"{self.symbol} - {self.quantity} @ {self.average_price} (Portfolio: {self.portfolio.user.username})"
+        return f"{self.symbol} - {self.quantity} para {self.portfolio.user.username}"
+
+
+# ➔ AGREGAMOS EL NUEVO MODELO DE TRANSACCIONES ACÁ:
+class Transaction(models.Model):
+    TRANSACTION_TYPES = [
+        ('BUY', 'Compra'),
+        ('SELL', 'Venta'),
+    ]
+
+    portfolio = models.ForeignKey(Portfolio, on_delete=models.CASCADE, related_name="transactions")
+    symbol = models.CharField(max_length=10) # Ej: AAPL, BTC
+    transaction_type = models.CharField(max_length=4, choices=TRANSACTION_TYPES)
+    quantity = models.DecimalField(max_digits=15, decimal_places=6)
+    price = models.DecimalField(max_digits=15, decimal_places=2) # Precio al que se ejecutó
+    timestamp = models.DateTimeField(auto_now_add=True) # Fecha y hora automática
+
+    def __str__(self):
+        return f"{self.transaction_type} {self.quantity} {self.symbol} a ${self.price} ({self.portfolio.user.username})"
     

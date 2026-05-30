@@ -1,6 +1,6 @@
 
 from rest_framework import serializers
-from .models import Portfolio, Position
+from .models import Portfolio, Position, Transaction
 
 class PositionSerializer(serializers.ModelSerializer):
     # Calculamos el costo total invertido en esta posición (Cantidad * Precio Promedio)
@@ -24,3 +24,10 @@ class PortfolioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Portfolio
         fields = ['id', 'total_value', 'positions']
+
+class TransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Transaction
+        fields = ['id', 'symbol', 'transaction_type', 'quantity', 'price', 'timestamp']
+        read_only_fields = ['id', 'timestamp']
+        

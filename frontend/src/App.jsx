@@ -12,6 +12,7 @@ import DashboardPage from "./pages/dashboard-page";
 import MarketsPage from "./pages/markets-page";
 import SettingsPage from "./pages/settings-page";
 import LoginPage from "./pages/login-page";
+import TradingPage from "./pages/trading-page"; // ➔ 1. IMPORTAMOS LA NUEVA PÁGINA
 
 function App() {
   return (
@@ -33,9 +34,16 @@ function App() {
             </ProtectedRoute>
           }
         >
+          {/* Ruta raíz (Dashboard principal) */}
           <Route
             index
             element={<DashboardPage />}
+          />
+
+          {/* ➔ 2. AGREGAMOS LA RUTA DE TRADING ACÁ: */}
+          <Route
+            path="trading"
+            element={<TradingPage />}
           />
 
           <Route

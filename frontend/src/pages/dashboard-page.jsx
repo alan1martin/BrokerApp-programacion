@@ -27,56 +27,58 @@ function DashboardPage() {
     loadPortfolio();
   }, []);
 
-  return (
-    <Stack spacing={4}>
-      <Typography variant="h4" fontWeight={700}>
-        Dashboard
-      </Typography>
+return (
+  <Stack spacing={4}>
+    <Typography variant="h4" fontWeight={700}>
+      Dashboard
+    </Typography>
 
-      <Typography color="gray">
-        {isLoading ? "Loading backend..." : data?.mensaje}
-      </Typography>
-      
-      <Typography variant="h6" color="success.main" fontWeight={600}>
-        Portfolio Value: ${portfolio?.total_value ?? "Loading..."}
-      </Typography>    
-      
-      {/* ➔ OPCIONAL: Le pasamos el total_value a las StatsCards si querés */}
-      <StatsCards totalValue={portfolio?.total_value} />
+    <Typography color="gray">
+      {isLoading ? "Loading backend..." : data?.mensaje}
+    </Typography>
+    
+    <Typography variant="h6" color="success.main" fontWeight={600}>
+      Portfolio Value: ${portfolio?.total_value ?? "Loading..."}
+    </Typography>    
+    
+    {/* ➔ CAMBIO 1: Solo renderizamos las StatsCards si portfolio ya no es null */}
+    {portfolio ? <StatsCards totalValue={portfolio.total_value} /> : <Typography>Cargando tarjetas...</Typography>}
 
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, lg: 8 }}>
-          <MarketChart />
-        </Grid>
-
-        <Grid size={{ xs: 12, lg: 4 }}>
-          {/* Este se queda como la lista de seguimiento del mercado general */}
-          <Watchlist title="Market Watchlist" />
-        </Grid>
+    <Grid container spacing={3}>
+      <Grid size={{ xs: 12, lg: 8 }}>
+        <MarketChart />
       </Grid>
 
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, lg: 6 }}>
-          <PortfolioAllocation />
-        </Grid>
+      <Grid size={{ xs: 12, lg: 4 }}>
+        <Watchlist title="Market Watchlist" />
+      </Grid>
+    </Grid>
 
-        <Grid size={{ xs: 12, lg: 6 }}>
-          {/* ➔ CAMBIO AQUÍ: A este segundo le pasamos las posiciones que vienen de Django */}
-          <Watchlist 
-            title="Mis Posiciones Reales" 
-            positions={portfolio?.positions} 
-            isRealPortfolio={true} 
-          />
-        </Grid>
+    <Grid container spacing={3}>
+      <Grid size={{ xs: 12, lg: 6 }}>
+        {/* ➔ CAMBIO 2: Solo renderizamos la torta si portfolio ya tiene las posiciones */}
+        {portfolio ? (
+          <PortfolioAllocation positions={portfolio.positions} />
+        ) : (
+          <Typography>Cargando distribución...</Typography>
+        )}
       </Grid>
 
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12 }}>
-          <RecentTransactions />
-        </Grid>
+      <Grid size={{ xs: 12, lg: 6 }}>
+        <Watchlist 
+          title="Mis Posiciones Reales" 
+          positions={portfolio?.positions || []} 
+          isRealPortfolio={true} 
+        />
       </Grid>
-    </Stack>
-  );
+    </Grid>
+
+    <Grid container spacing={3}>
+      <Grid size={{ xs: 12 }}>
+        <RecentTransactions />
+      </Grid>
+    </Grid>
+  </Stack>
+);
 }
-
 export default DashboardPage;
