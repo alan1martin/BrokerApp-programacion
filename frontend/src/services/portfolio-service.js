@@ -17,3 +17,9 @@ export const getTransactions = async () => {
   const response = await api.get("/portfolio/transactions/");
   return response.data;
 };
+
+export const resetAccount = async () => {
+  // Ajustá la URL según los endpoints de tu axiosInstance configurado
+  const response = await axiosInstance.post("/portfolio/reset/"); 
+  return response.data;
+};

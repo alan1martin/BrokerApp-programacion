@@ -6,6 +6,63 @@ from decimal import Decimal
 from .models import Portfolio, Position, Transaction
 from .serializers import PortfolioSerializer, TransactionSerializer
 
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Transaction, Portfolio # Asegurate de usar tus modelos reales
+
+import random
+from datetime import datetime, timedelta
+from django.http import JsonResponse
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_stock_history(request, symbol):
+    # Simulamos un fetch a una cotización base estable para armar una serie temporal consistente
+    prices = {
+        "AAPL": 175.50,
+        "BTC": 62000.00,
+        "TSLA": 189.44,
+        "NVDA": 901.11
+    }
+    
+    current_price = prices.get(symbol.upper(), 100.0)
+    history = []
+    now = datetime.now()
+    
+    # Generamos 12 puntos de tiempo estables directo desde el servidor
+    base = current_price * 0.97 # arrancamos un 3% abajo
+    for i in range(12, -1, -1):
+        point_time = now - timedelta(minutes=i * 15)
+        change = (random.random() - 0.48) * (base * 0.005)
+        base += change
+        
+        # Guardamos la estructura limpia
+        history.append({
+            "time": point_time.strftime("%H:%M"),
+            "price": round(base if i != 0 else current_price, 2) # el último es exacto
+        })
+        
+    return JsonResponse({"symbol": symbol.upper(), "data": history})
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+
+def reset_portfolio(request):
+    user = request.user
+    
+    # 1. Borramos todas las transacciones del usuario
+    Transaction.objects.filter(user=user).delete()
+    
+    # 2. Buscamos su portfolio/perfil y reseteamos el cash a 10000
+    portfolio, created = Portfolio.objects.get_or_create(user=user)
+    portfolio.cash = 10000.00
+    portfolio.save()
+    
+    return Response({"message": "Cuenta reseteada con éxito. Volvés a tener $10,000.00 USD!"}, status=status.HTTP_200_OK)
 
 class TransactionListView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -115,3 +172,4 @@ class ExecuteTradeView(APIView):
                 "average_price": str(position.average_price if position.id else 0)
             }
         }, status=status.HTTP_201_CREATED)
+    

@@ -2,12 +2,11 @@ import { createContext, useContext, useState, useEffect } from "react";
 
 const MarketContext = createContext();
 
-// Definimos los activos iniciales con un precio base por si la API tarda en responder
 const INITIAL_ASSETS = [
-  { symbol: "AAPL", name: "Apple Inc.", currentPrice: 175.50 },
-  { symbol: "BTC", name: "Bitcoin", currentPrice: 62000.00 },
-  { symbol: "TSLA", name: "Tesla, Inc.", currentPrice: 189.44 },
-  { symbol: "NVDA", name: "NVIDIA Corp.", currentPrice: 901.11 },
+  { symbol: "AAPL", name: "Apple Inc.", currentPrice: 175.50, change24h: 1.25 },
+  { symbol: "BTC", name: "Bitcoin", currentPrice: 62000.00, change24h: -2.41 },
+  { symbol: "TSLA", name: "Tesla, Inc.", currentPrice: 189.44, change24h: 0.85 },
+  { symbol: "NVDA", name: "NVIDIA Corp.", currentPrice: 901.11, change24h: 4.12 },
 ];
 
 export function MarketProvider({ children }) {
@@ -16,27 +15,29 @@ export function MarketProvider({ children }) {
 
   const fetchRealPrices = async () => {
     try {
-      // Usamos una API global y pública de precios de mercado (CoinGecko + Yahoo Mirror)
-      // Para hacerlo simple, rápido y sin registrarte, le pegamos a un endpoint unificado:
       const response = await fetch("https://api.binance.com/api/v3/ticker/price?symbols=[%22BTCUSDT%22]");
       const cryptoData = await response.json();
       
-      // Para las acciones (AAPL, TSLA, NVDA), como Wall Street cierra los fines de semana,
-      // consumimos un endpoint de cotizaciones reales del día:
       const stocksResponse = await fetch("https://financialmodelingprep.com/api/v3/quote-short/AAPL,TSLA,NVDA?apikey=demo");
       const stocksData = await stocksResponse.json();
 
-      // Mapeamos los precios reales adentro de nuestro estado de React
       setAssets((prevAssets) =>
         prevAssets.map((asset) => {
+          // Asignamos una variación fija o levemente dinámica para el prototipo
+          let change = asset.change24h; 
+
           if (asset.symbol === "BTC" && cryptoData[0]) {
-            return { ...asset, currentPrice: parseFloat(parseFloat(cryptoData[0].price).toFixed(2)) };
+            const newPrice = parseFloat(parseFloat(cryptoData[0].price).toFixed(2));
+            // Si el precio cambió, recalculamos una variación realista para simular las 24h
+            change = newPrice > 65000 ? 3.14 : -1.85; 
+            return { ...asset, currentPrice: newPrice, change24h: change };
           }
           
-          // Si es una acción y la API demo nos devolvió data real de Wall Street
           const stockInfo = Array.isArray(stocksData) ? stocksData.find(s => s.symbol === asset.symbol) : null;
           if (stockInfo) {
-            return { ...asset, currentPrice: parseFloat(stockInfo.price.toFixed(2)) };
+            // Simulamos variaciones divertidas basadas en el precio demo
+            change = stockInfo.price > 500 ? 5.23 : asset.symbol === "TSLA" ? -3.12 : 1.45;
+            return { ...asset, currentPrice: parseFloat(stockInfo.price.toFixed(2)), change24h: change };
           }
           
           return asset;
@@ -50,12 +51,8 @@ export function MarketProvider({ children }) {
   };
 
   useEffect(() => {
-    // Buscamos los precios reales apenas arranca la app
     fetchRealPrices();
-
-    // Actualizamos del mercado real cada 30 segundos para no saturar la red
     const interval = setInterval(fetchRealPrices, 30000);
-
     return () => clearInterval(interval);
   }, []);
 

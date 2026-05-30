@@ -13,14 +13,15 @@ import {
   Alert,
   CircularProgress
 } from "@mui/material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom"; // Captura datos de la navegación
 import { executeTrade } from "../services/portfolio-service";
-// ➔ 1. IMPORTAMOS EL HOOK DEL MERCADO REAL
 import { useMarket } from "../context/market-context.jsx";
+import TradingChart from "../components/dashboard/trading-chart";
 
 function TradingPage() {
-  // ➔ 2. CONSUMIMOS LA DATA REAL Y EL ESTADO DE CARGA GLOBAL
   const { assets, loadingMarket } = useMarket();
+  const location = useLocation(); 
 
   const [action, setAction] = useState(0); // 0 = COMPRAR, 1 = VENDER
   const [selectedSymbol, setSelectedSymbol] = useState("AAPL");
@@ -29,7 +30,13 @@ function TradingPage() {
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null); 
 
-  // ➔ 3. BUSCAMOS EL ACTIVO DENTRO DEL ARRAY REAL QUE VIENE DE INTERNET
+  // Detectamos limpiamente si venimos desde la tabla de mercados
+  useEffect(() => {
+    if (location.state?.defaultSymbol) {
+      setSelectedSymbol(location.state.defaultSymbol);
+    }
+  }, [location.state]);
+
   const currentAsset = assets.find(a => a.symbol === selectedSymbol);
   
   const estimatedTotal = quantity && currentAsset 
@@ -72,7 +79,6 @@ function TradingPage() {
     }
   };
 
-  // ➔ 4. SI LAS APIS TODAVÍA NO CONTESTARON, MOSTRAMOS UN Spinner DE CARGA
   if (loadingMarket) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "60vh" }}>
@@ -94,7 +100,7 @@ function TradingPage() {
       )}
 
       <Grid container spacing={3}>
-        {/* COLUMNA IZQUIERDA: Info del Activo */}
+        {/* COLUMNA IZQUIERDA: Info del Activo y Gráfico */}
         <Grid size={{ xs: 12, md: 7, lg: 8 }}>
           <Card sx={{ backgroundColor: "#15181e", height: "100%" }}>
             <CardContent>
@@ -108,20 +114,13 @@ function TradingPage() {
                 Mercado Real • Precios actualizados vía API pública
               </Typography>
               
-              <Box 
-                sx={{ 
-                  mt: 4, 
-                  height: 200, 
-                  backgroundColor: "#1e222b", 
-                  borderRadius: 2, 
-                  display: "flex", 
-                  alignItems: "center", 
-                  justifyContent: "center",
-                  border: "1px dashed #333"
-                }}
-              >
-                <Typography color="gray">Próximamente: Gráfico interactivo en tiempo real de {selectedSymbol}</Typography>
-              </Box>
+              {/* Gráfico Real e Interactivo de Nivo */}
+              {currentAsset && (
+                <TradingChart 
+                  symbol={currentAsset.symbol} 
+                  currentPrice={currentAsset.currentPrice} 
+                />
+              )}
             </CardContent>
           </Card>
         </Grid>
