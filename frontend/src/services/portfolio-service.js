@@ -12,3 +12,8 @@ export const executeTrade = async (tradeData) => {
   const response = await api.post("/portfolio/trade/", tradeData);
   return response.data;
 };
+
+export const getTransactions = async () => {
+  const response = await api.get("/portfolio/transactions/");
+  return response.data;
+};

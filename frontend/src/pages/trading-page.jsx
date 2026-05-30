@@ -1,4 +1,3 @@
-
 import { 
   Grid, 
   Typography, 
@@ -11,29 +10,27 @@ import {
   Tab, 
   Box,
   MenuItem,
-  Alert
+  Alert,
+  CircularProgress
 } from "@mui/material";
 import { useState } from "react";
-// ➔ 1. IMPORTAMOS EL SERVICIO
 import { executeTrade } from "../services/portfolio-service";
-
-const AVAILABLE_ASSETS = [
-  { symbol: "AAPL", name: "Apple Inc.", currentPrice: 175.50 },
-  { symbol: "BTC", name: "Bitcoin", currentPrice: 62000.00 },
-  { symbol: "TSLA", name: "Tesla, Inc.", currentPrice: 189.44 },
-  { symbol: "NVDA", name: "NVIDIA Corp.", currentPrice: 901.11 },
-];
+// ➔ 1. IMPORTAMOS EL HOOK DEL MERCADO REAL
+import { useMarket } from "../context/market-context.jsx";
 
 function TradingPage() {
+  // ➔ 2. CONSUMIMOS LA DATA REAL Y EL ESTADO DE CARGA GLOBAL
+  const { assets, loadingMarket } = useMarket();
+
   const [action, setAction] = useState(0); // 0 = COMPRAR, 1 = VENDER
   const [selectedSymbol, setSelectedSymbol] = useState("AAPL");
   const [quantity, setQuantity] = useState("");
   
-  // Estados para el feedback de la API
   const [loading, setLoading] = useState(false);
-  const [statusMessage, setStatusMessage] = useState(null); // { type: 'success'|'error', text: '' }
+  const [statusMessage, setStatusMessage] = useState(null); 
 
-  const currentAsset = AVAILABLE_ASSETS.find(a => a.symbol === selectedSymbol);
+  // ➔ 3. BUSCAMOS EL ACTIVO DENTRO DEL ARRAY REAL QUE VIENE DE INTERNET
+  const currentAsset = assets.find(a => a.symbol === selectedSymbol);
   
   const estimatedTotal = quantity && currentAsset 
     ? (parseFloat(quantity) * currentAsset.currentPrice).toFixed(2) 
@@ -41,10 +38,9 @@ function TradingPage() {
 
   const handleActionChange = (event, newValue) => {
     setAction(newValue);
-    setStatusMessage(null); // Limpiamos alertas al cambiar de pestaña
+    setStatusMessage(null); 
   };
 
-  // ➔ 2. CONECTAMOS LA LÓGICA DE EJECUCIÓN REAL
   const handleExecuteTrade = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -52,7 +48,7 @@ function TradingPage() {
 
     const tradeData = {
       symbol: selectedSymbol,
-      transaction_type: action === 0 ? "BUY" : "SELL", // Aseguramos que viaje BUY o SELL
+      transaction_type: action === 0 ? "BUY" : "SELL", 
       quantity: parseFloat(quantity),
       price: currentAsset.currentPrice
     };
@@ -64,9 +60,8 @@ function TradingPage() {
         type: "success",
         text: response.message
       });
-      setQuantity(""); // Limpiamos el input si salió bien
+      setQuantity(""); 
     } catch (error) {
-      // CORREGIDO: Cambiado '#' por '//' para evitar errores de sintaxis en JS
       const serverError = error.response?.data?.error || "Hubo un error al procesar la orden.";
       setStatusMessage({
         type: "error",
@@ -76,6 +71,15 @@ function TradingPage() {
       setLoading(false);
     }
   };
+
+  // ➔ 4. SI LAS APIS TODAVÍA NO CONTESTARON, MOSTRAMOS UN Spinner DE CARGA
+  if (loadingMarket) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "60vh" }}>
+        <CircularProgress size={60} />
+      </Box>
+    );
+  }
   
   return (
     <Stack spacing={4}>
@@ -83,7 +87,6 @@ function TradingPage() {
         Operar Activos
       </Typography>
 
-      {/* Alertas de feedback para el usuario */}
       {statusMessage && (
         <Alert severity={statusMessage.type} variant="filled" sx={{ width: "100%" }}>
           {statusMessage.text}
@@ -102,7 +105,7 @@ function TradingPage() {
                 ${currentAsset?.currentPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}
               </Typography>
               <Typography color="gray" variant="body2">
-                Mercado Abierto • Cotizaciones simuladas en tiempo real
+                Mercado Real • Precios actualizados vía API pública
               </Typography>
               
               <Box 
@@ -117,7 +120,7 @@ function TradingPage() {
                   border: "1px dashed #333"
                 }}
               >
-                <Typography color="gray">Próximamente: Gráfico interactivo de {selectedSymbol}</Typography>
+                <Typography color="gray">Próximamente: Gráfico interactivo en tiempo real de {selectedSymbol}</Typography>
               </Box>
             </CardContent>
           </Card>
@@ -154,7 +157,7 @@ function TradingPage() {
                     disabled={loading}
                     fullWidth
                   >
-                    {AVAILABLE_ASSETS.map((asset) => (
+                    {assets.map((asset) => (
                       <MenuItem key={asset.symbol} value={asset.symbol}>
                         {asset.symbol} - {asset.name}
                       </MenuItem>
@@ -175,7 +178,7 @@ function TradingPage() {
 
                   <TextField
                     label="Precio de Ejecución (USD)"
-                    value={`$${currentAsset?.currentPrice.toLocaleString()}`}
+                    value={currentAsset ? `$${currentAsset.currentPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}` : ""}
                     disabled
                     fullWidth
                   />

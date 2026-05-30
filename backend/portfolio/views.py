@@ -6,6 +6,21 @@ from decimal import Decimal
 from .models import Portfolio, Position, Transaction
 from .serializers import PortfolioSerializer, TransactionSerializer
 
+
+class TransactionListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        # 1. Traemos el portfolio del usuario
+        portfolio = get_object_or_404(Portfolio, user=request.user)
+        
+        # 2. Buscamos sus transacciones ordenadas por fecha (las más nuevas primero)
+        transactions = portfolio.transactions.all().order_by('-timestamp')
+        
+        # 3. Serializamos los datos y los escupimos al frontend
+        serializer = TransactionSerializer(transactions, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 # ➔ 1. RECUPERAMOS LA VISTA QUE SE HABÍA BORRADO
 class PortfolioDetailView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -27,39 +42,49 @@ class ExecuteTradeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        # Traemos el portfolio del usuario autenticado
         portfolio = get_object_or_404(Portfolio, user=request.user)
         
-        # Validamos los datos recibidos mediante el serializer
         serializer = TransactionSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-        # Extraemos los datos validados
         symbol = serializer.validated_data['symbol'].upper()
         trade_type = serializer.validated_data['transaction_type']
         quantity = Decimal(str(serializer.validated_data['quantity']))
         price = Decimal(str(serializer.validated_data['price']))
 
-        # Buscamos si ya existe una posición para este activo
+        # Calculamos el costo bruto de esta operación en particular
+        trade_total_cost = quantity * price
+
+        # Buscamos o creamos la posición del activo
         position, created = Position.objects.get_or_create(
             portfolio=portfolio,
             symbol=symbol,
             defaults={'quantity': Decimal('0.00'), 'average_price': Decimal('0.00')}
         )
 
-        # LÓGICA DE COMPRA (BUY)
+        # ➔ LÓGICA DE COMPRA (BUY) CON VALIDACIÓN DE EFECTIVO
         if trade_type == 'BUY':
-            # Calculamos el costo total nuevo y el viejo para sacar el promedio ponderado
+            # Control de saldo disponible
+            if portfolio.cash_balance < trade_total_cost:
+                return Response(
+                    {"error": f"Saldo insuficiente. Necesitás ${trade_total_cost:,.2f} y tenés ${portfolio.cash_balance:,.2f} en cuenta."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Si tiene saldo: calculamos promedio ponderado y descontamos efectivo
             current_total_cost = position.quantity * position.average_price
             new_trade_cost = quantity * price
             
             position.quantity += quantity
-            # Fórmula de precio promedio ponderado
             position.average_price = (current_total_cost + new_trade_cost) / position.quantity
             position.save()
 
-        # LÓGICA DE VENTA (SELL)
+            # Restamos el dinero del saldo de la cuenta
+            portfolio.cash_balance -= trade_total_cost
+            portfolio.save()
+
+        # ➔ LÓGICA DE VENTA (SELL) CON CONTROL DE ACCIONES Y REINTEGRO DE EFECTIVO
         elif trade_type == 'SELL':
             if position.quantity < quantity:
                 return Response(
@@ -69,17 +94,21 @@ class ExecuteTradeView(APIView):
             
             position.quantity -= quantity
             
-            # Si vendió todo, borramos la fila de la base de datos para limpiar la pantalla
             if position.quantity == 0:
                 position.delete()
             else:
                 position.save()
 
-        # Guardamos el registro de la transacción en el historial
+            # Sumamos el dinero de la venta al saldo de la cuenta
+            portfolio.cash_balance += trade_total_cost
+            portfolio.save()
+
+        # Guardamos el registro en el historial
         serializer.save(portfolio=portfolio, symbol=symbol)
 
         return Response({
             "message": f"Orden de {trade_type} ejecutada con éxito.",
+            "cash_balance": str(portfolio.cash_balance),
             "position": {
                 "symbol": symbol,
                 "current_quantity": str(position.quantity if position.id else 0),

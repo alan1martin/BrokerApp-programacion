@@ -1,125 +1,125 @@
-
-import {
-Card,
-CardContent,
-Typography,
-Table,
-TableBody,
-TableCell,
-TableContainer,
-TableHead,
-TableRow,
-Chip,
-Box,
+import { 
+  Card, 
+  CardContent, 
+  Typography, 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow, 
+  Chip,
+  CircularProgress,
+  Box
 } from "@mui/material";
-
-const transactions = [
-{
-id: 1,
-asset: "Bitcoin",
-symbol: "BTC",
-type: "BUY",
-quantity: "0.42",
-price: "$64,281",
-},
-{
-id: 2,
-asset: "Ethereum",
-symbol: "ETH",
-type: "SELL",
-quantity: "12.5",
-price: "$3,421",
-},
-{
-id: 3,
-asset: "Solana",
-symbol: "SOL",
-type: "BUY",
-quantity: "250",
-price: "$142",
-},
-];
+import { useEffect, useState } from "react";
+// Importamos el servicio que creamos recién
+import { getTransactions } from "../../services/portfolio-service";
 
 function RecentTransactions() {
-return (
-<Card
-sx={{
-backgroundColor: "#15181e",
-}}
-> <CardContent> <Typography
-       variant="h6"
-       gutterBottom
-     >
-Recent Transactions </Typography>
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-    <TableContainer>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Asset</TableCell>
-            <TableCell>Type</TableCell>
-            <TableCell>Quantity</TableCell>
-            <TableCell>Price</TableCell>
-          </TableRow>
-        </TableHead>
+  useEffect(() => {
+    async function loadTransactions() {
+      try {
+        const data = await getTransactions();
+        setTransactions(data);
+      } catch (error) {
+        console.error("Error cargando transacciones:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
 
-        <TableBody>
-          {transactions.map((item) => (
-            <TableRow
-              key={item.id}
-              hover
-            >
-              <TableCell>
-                <Box>
-                  <Typography fontWeight={700}>
-                    {item.asset}
-                  </Typography>
+    loadTransactions();
+  }, []);
 
-                  <Typography
-                    variant="body2"
-                    color="gray"
-                  >
-                    {item.symbol}
-                  </Typography>
-                </Box>
-              </TableCell>
+  // Función auxiliar para formatear la fecha que nos manda Django
+  const formatDate = (dateString) => {
+    const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+    return new Date(dateString).toLocaleDateString('es-AR', options);
+  };
 
-              <TableCell>
-                <Chip
-                  label={item.type}
-                  size="small"
-                  sx={{
-                    backgroundColor:
-                      item.type === "BUY"
-                        ? "rgba(0,200,83,0.15)"
-                        : "rgba(255,82,82,0.15)",
+  return (
+    <Card sx={{ backgroundColor: "#15181e" }}>
+      <CardContent>
+        <Typography variant="h6" fontWeight={700} gutterBottom sx={{ mb: 3 }}>
+          Historial de Transacciones Recientes
+        </Typography>
 
-                    color:
-                      item.type === "BUY"
-                        ? "#00c853"
-                        : "#ff5252",
+        {loading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+            <CircularProgress color="primary" />
+          </Box>
+        ) : transactions.length === 0 ? (
+          <Typography color="gray" variant="body2" sx={{ py: 2, textAling: "center" }}>
+            Aún no has realizado ninguna operación de trading.
+          </Typography>
+        ) : (
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ color: "gray", fontWeight: 600 }}>Fecha / Hora</TableCell>
+                  <TableCell sx={{ color: "gray", fontWeight: 600 }}>Activo</TableCell>
+                  <TableCell sx={{ color: "gray", fontWeight: 600 }}>Operación</TableCell>
+                  <TableCell sx={{ color: "gray", fontWeight: 600 }} align="right">Cantidad</TableCell>
+                  <TableCell sx={{ color: "gray", fontWeight: 600 }} align="right">Precio Ejecución</TableCell>
+                  <TableCell sx={{ color: "gray", fontWeight: 600 }} align="right">Total</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {transactions.map((tx) => {
+                  const isBuy = tx.transaction_type === "BUY";
+                  const totalCost = (parseFloat(tx.quantity) * parseFloat(tx.price)).toFixed(2);
 
-                    fontWeight: 700,
-                  }}
-                />
-              </TableCell>
-
-              <TableCell>
-                {item.quantity}
-              </TableCell>
-
-              <TableCell>
-                {item.price}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  </CardContent>
-</Card>
-
-);
+                  return (
+                    <TableRow key={tx.id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                      {/* Fecha */}
+                      <TableCell sx={{ color: "white" }}>
+                        {formatDate(tx.timestamp)}
+                      </TableCell>
+                      
+                      {/* Símbolo del Activo */}
+                      <TableCell sx={{ color: "white", fontWeight: 700 }}>
+                        {tx.symbol}
+                      </TableCell>
+                      
+                      {/* Tipo de Operación (Badge Dinámico de Material UI) */}
+                      <TableCell>
+                        <Chip 
+                          label={isBuy ? "COMPRA" : "VENTA"} 
+                          size="small"
+                          color={isBuy ? "primary" : "error"}
+                          sx={{ fontWeight: 600, borderRadius: 1 }}
+                        />
+                      </TableCell>
+                      
+                      {/* Cantidad */}
+                      <TableCell sx={{ color: "white" }} align="right">
+                        {parseFloat(tx.quantity).toLocaleString("en-US", { maximumFractionDigits: 6 })}
+                      </TableCell>
+                      
+                      {/* Precio */}
+                      <TableCell sx={{ color: "white" }} align="right">
+                        ${parseFloat(tx.price).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                      </TableCell>
+                      
+                      {/* Total calculado */}
+                      <TableCell sx={{ color: isBuy ? "primary.main" : "error.main", fontWeight: 600 }} align="right">
+                        ${parseFloat(totalCost).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 export default RecentTransactions;

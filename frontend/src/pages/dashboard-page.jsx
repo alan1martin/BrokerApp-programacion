@@ -1,3 +1,4 @@
+
 import { Grid, Stack, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { getPortfolio } from "../services/portfolio-service";
@@ -17,7 +18,7 @@ function DashboardPage() {
     async function loadPortfolio() {
       try {
         const data = await getPortfolio();
-        console.log("PORTFOLIO COMPLETO:", data); // Vas a ver que acá adentro viene data.positions 🎉
+        console.log("PORTFOLIO COMPLETO:", data); 
         setPortfolio(data);
       } catch (error) {
         console.error("Error loading portfolio:", error);
@@ -27,58 +28,67 @@ function DashboardPage() {
     loadPortfolio();
   }, []);
 
-return (
-  <Stack spacing={4}>
-    <Typography variant="h4" fontWeight={700}>
-      Dashboard
-    </Typography>
+  return (
+    <Stack spacing={4}>
+      <Typography variant="h4" fontWeight={700}>
+        Dashboard
+      </Typography>
 
-    <Typography color="gray">
-      {isLoading ? "Loading backend..." : data?.mensaje}
-    </Typography>
-    
-    <Typography variant="h6" color="success.main" fontWeight={600}>
-      Portfolio Value: ${portfolio?.total_value ?? "Loading..."}
-    </Typography>    
-    
-    {/* ➔ CAMBIO 1: Solo renderizamos las StatsCards si portfolio ya no es null */}
-    {portfolio ? <StatsCards totalValue={portfolio.total_value} /> : <Typography>Cargando tarjetas...</Typography>}
+      <Typography color="gray">
+        {isLoading ? "Loading backend..." : data?.mensaje}
+      </Typography>
+      
+      {/* Contenedor con los dos balances económicos reales */}
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={4}>
+        <Typography variant="h6" color="success.main" fontWeight={600}>
+          Valor Total del Portfolio: ${portfolio ? parseFloat(portfolio.total_value).toLocaleString("en-US", { minimumFractionDigits: 2 }) : "Cargando..."}
+        </Typography> 
+        
+        <Typography variant="h6" color="primary.main" fontWeight={600}>
+          Efectivo Disponible (Cash): ${portfolio ? parseFloat(portfolio.cash_balance).toLocaleString("en-US", { minimumFractionDigits: 2 }) : "Cargando..."}
+        </Typography> 
+      </Stack>
+      
+      {/* Renderizamos las StatsCards si el portfolio ya cargó */}
+      {portfolio ? <StatsCards totalValue={portfolio.total_value} /> : <Typography>Cargando tarjetas...</Typography>}
 
-    <Grid container spacing={3}>
-      <Grid size={{ xs: 12, lg: 8 }}>
-        <MarketChart />
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, lg: 8 }}>
+          <MarketChart />
+        </Grid>
+
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <Watchlist title="Market Watchlist" />
+        </Grid>
       </Grid>
 
-      <Grid size={{ xs: 12, lg: 4 }}>
-        <Watchlist title="Market Watchlist" />
-      </Grid>
-    </Grid>
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, lg: 6 }}>
+          {/* Gráfico de torta mapeado con las posiciones reales */}
+          {portfolio ? (
+            <PortfolioAllocation positions={portfolio.positions} />
+          ) : (
+            <Typography>Cargando distribución...</Typography>
+          )}
+        </Grid>
 
-    <Grid container spacing={3}>
-      <Grid size={{ xs: 12, lg: 6 }}>
-        {/* ➔ CAMBIO 2: Solo renderizamos la torta si portfolio ya tiene las posiciones */}
-        {portfolio ? (
-          <PortfolioAllocation positions={portfolio.positions} />
-        ) : (
-          <Typography>Cargando distribución...</Typography>
-        )}
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <Watchlist 
+            title="Mis Posiciones Reales" 
+            positions={portfolio?.positions || []} 
+            isRealPortfolio={true} 
+          />
+        </Grid>
       </Grid>
 
-      <Grid size={{ xs: 12, lg: 6 }}>
-        <Watchlist 
-          title="Mis Posiciones Reales" 
-          positions={portfolio?.positions || []} 
-          isRealPortfolio={true} 
-        />
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12 }}>
+          {/* El historial real que conectamos en la fase anterior */}
+          <RecentTransactions />
+        </Grid>
       </Grid>
-    </Grid>
+    </Stack>
+  ); 
+} 
 
-    <Grid container spacing={3}>
-      <Grid size={{ xs: 12 }}>
-        <RecentTransactions />
-      </Grid>
-    </Grid>
-  </Stack>
-);
-}
 export default DashboardPage;
