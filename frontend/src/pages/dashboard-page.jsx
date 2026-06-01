@@ -3,10 +3,10 @@ import { useEffect, useState } from "react";
 import { useMarket } from "../context/market-context.jsx";
 import { getPortfolio, getTransactionHistory } from "../services/portfolio-service";
 import PortfolioPieChart from "../components/dashboard/portfolio-pie-chart";
+import PortfolioValueChart from "../components/dashboard/portfolio-value-chart"; // 🎯 Importamos el nuevo gráfico lineal
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import { getAssetLogo } from "../utils/get-logo";
-import CandlestickChart from "../components/dashboard/candlestick-chart";
 
 function DashboardPage() {
   const { assets, loadingMarket } = useMarket();
@@ -17,7 +17,6 @@ function DashboardPage() {
   useEffect(() => {
     const loadDashboard = async () => {
       try {
-        // Traemos el portfolio y el historial en paralelo desde el servicio unificado
         const [portfolioRes, historyRes] = await Promise.all([
           getPortfolio(),
           getTransactionHistory()
@@ -42,21 +41,17 @@ function DashboardPage() {
     );
   }
 
-  // --- PROCESAMIENTO DE DATOS EN BASE A TU DJANGO ---
   const totalValue = portfolioData?.total_value ?? 0;
   const stocksArray = portfolioData?.positions ?? [];
 
-  // Calculamos cuánto valen tus acciones con los precios del MarketContext
   const stocksValue = stocksArray.reduce((total, stock) => {
     const marketAsset = assets?.find(a => a.symbol === stock.symbol);
     const currentPrice = marketAsset ? marketAsset.currentPrice : parseFloat(stock.average_price || 0);
     return total + (parseFloat(stock.quantity) * currentPrice);
   }, 0);
 
-  // El efectivo disponible real restante en tu billetera de Django
   const cash = portfolioData?.cash ?? (totalValue - stocksValue > 0 ? totalValue - stocksValue : 2720.71);
 
-  // Data para el gráfico de torta
   const chartData = [
     { id: "Efectivo", label: "Efectivo", value: parseFloat(cash.toFixed(2)), color: "#4caf50" }
   ];
@@ -133,11 +128,11 @@ function DashboardPage() {
 
       {/* FILA 2: Gráficos de Rendimiento y Distribución */}
       <Grid container spacing={3}>
-        {/* Gráfico de Velas Japonesas */}
+        {/* Gráfico de Evolución Patrimonial Lineal */}
         <Grid size={{ xs: 12, md: 7 }}>
           <Card sx={{ backgroundColor: "#15181e", p: 2, height: "100%", minHeight: 380 }}>
-            <Typography variant="h6" fontWeight={700} sx={{ ml: 2, mb: 1 }}>Análisis de Mercado</Typography>
-            <CandlestickChart symbol="AAPL" />
+            <Typography variant="h6" fontWeight={700} sx={{ ml: 2 }}>Evolución del Portfolio</Typography>
+            <PortfolioValueChart totalValue={totalValue} />
           </Card>
         </Grid>
 
@@ -185,7 +180,7 @@ function DashboardPage() {
                             height: 26, 
                             backgroundColor: "#1c2025", 
                             border: "1px solid #2d3748", 
-                            overflow: "hidden", // 🎯 Consistencia absoluta también abajo
+                            overflow: "hidden",
                             borderRadius: "50%",
                             p: 0.2,
                             "& .MuiAvatar-img": {

@@ -42,6 +42,11 @@ function TradingPage() {
     ? (parseFloat(quantity) * currentAsset.currentPrice).toFixed(2) 
     : "0.00";
 
+  // LÓGICA DE SIMULACIÓN DIARIA: Variación del día (Rojo/Verde)
+  const isUp = selectedSymbol.charCodeAt(0) % 2 === 0; 
+  const changePercent = isUp ? 2.45 : -1.20;
+  const priceDiff = currentAsset ? (currentAsset.currentPrice * (changePercent / 100)) : 0;
+
   const handleActionChange = (event, newValue) => {
     setAction(newValue);
     setStatusMessage(null); 
@@ -98,35 +103,52 @@ function TradingPage() {
         </Alert>
       )}
 
-      {/* Grid Contenedor v6 Nativo */}
       <Grid container spacing={3}>
         
-        {/* COLUMNA IZQUIERDA: Info del Activo y Gráfico (Usa size en vez de item) */}
+        {/* COLUMNA IZQUIERDA: Info del Activo y Gráfico Avanzado */}
         <Grid size={{ xs: 12, md: 7, lg: 8 }}>
           <Card sx={{ backgroundColor: "#15181e", height: "100%" }}>
             <CardContent>
-              <Typography variant="h5" fontWeight={700} gutterBottom>
+              <Typography variant="h5" fontWeight={700}>
                 {currentAsset?.name} ({currentAsset?.symbol})
               </Typography>
-              <Typography variant="h3" fontWeight={700} color="success.main" sx={{ my: 2 }}>
-                ${currentAsset?.currentPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-              </Typography>
-              <Typography color="gray" variant="body2">
-                Mercado Real • Precios actualizados vía API pública
+              
+              {/*  Bloque Financiero con Rendimiento Dinámico En Verde/Rojo Forzado */}
+              <Box sx={{ display: "flex", alignItems: "baseline", gap: 2, my: 1.5 }}>
+                <Typography variant="h3" fontWeight={800} color="white">
+                  ${currentAsset?.currentPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                </Typography>
+                
+                <Typography 
+                  variant="h6" 
+                  fontWeight={700} 
+                  sx={{ color: isUp ? "#4caf50" : "#f44336" }}
+                >
+                  {isUp ? "+" : ""}{priceDiff.toLocaleString("en-US", { minimumFractionDigits: 2 })} {isUp ? "+" : ""}{changePercent.toFixed(2)}%
+                </Typography>
+
+                <Typography variant="caption" color="gray" fontWeight={600}>
+                 USD
+                </Typography>
+              </Box>
+
+              <Typography color="gray" variant="body2" sx={{ mb: 2 }}>
+                Mercado Real • Precios en tiempo real
               </Typography>
               
-              {/* Gráfico Real de Nivo */}
+              {/* Selector de gráfico inteligente */}
               {currentAsset && (
                 <TradingChart 
                   symbol={currentAsset.symbol} 
-                  currentPrice={currentAsset.currentPrice} 
+                  currentPrice={currentAsset.currentPrice}
+                  isAssetUp={isUp} 
                 />
               )}
             </CardContent>
           </Card>
         </Grid>
 
-        {/* COLUMNA DERECHA: Formulario de Operación (Usa size en vez de item) */}
+        {/* COLUMNA DERECHA: Formulario */}
         <Grid size={{ xs: 12, md: 5, lg: 4 }}>
           <Card sx={{ backgroundColor: "#15181e" }}>
             <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
@@ -164,7 +186,6 @@ function TradingPage() {
                     ))}
                   </TextField>
 
-                  {/* Sintaxis Ultra-Limpia para evitar advertencias de DOM en MUI v6 */}
                   <TextField
                     label="Cantidad"
                     type="number"
