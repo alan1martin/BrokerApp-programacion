@@ -73,7 +73,7 @@ function DashboardPage() {
 
   return (
     <Stack spacing={4}>
-      <Typography variant="h4" fontWeight={700}>Dashboard Principal</Typography>
+      <Typography variant="h4" fontWeight={600}>Estado de cuenta</Typography>
 
       {/* FILA 1: Métricas Principales */}
       <Grid container spacing={3}>

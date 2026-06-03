@@ -51,6 +51,10 @@ function PortfolioValueChart({ totalValue }) {
       sparkline: { enabled: false }
     },
     theme: { mode: "dark" },
+    /* 🎯 SOLUCIÓN AQUÍ: Esto remueve por completo los indicadores fijos sobre la línea */
+    dataLabels: {
+      enabled: false
+    },
     stroke: {
       curve: "smooth",
       width: 3,

@@ -16,7 +16,8 @@ function PortfolioPieChart({ data }) {
         colors={{ datum: 'data.color' }}
         borderWidth={1}
         borderColor={{ from: 'color', modifiers: [['darker', 0.2]] }}
-        enableArcLinkLabels={true}
+        enableArcLinkLabels={false}
+        enableArcLabels={false}
         arcLinkLabelsTextColor="#8a94a6"
         arcLinkLabelsThickness={2}
         arcLinkLabelsColor={{ from: 'color' }}
@@ -28,17 +29,16 @@ function PortfolioPieChart({ data }) {
           }
         }}
       />
-      {/* Texto en el centro del hueco (Donut) */}
+    {/* Texto en el centro del hueco (Donut)
       <Box sx={{
         position: 'absolute',
-        top: '47%',
+        top: '50%', // 🎯 Ajustado a 50% exacto para que quede perfectamente centrado al estar solo
         left: '50%',
         transform: 'translate(-50%, -50%)',
         textAlign: 'center'
       }}>
-        <Typography variant="caption" color="gray">Balance</Typography>
         <Typography variant="h6" fontWeight={700} color="white">Activos</Typography>
-      </Box>
+      </Box> */}
     </Box>
   );
 }
