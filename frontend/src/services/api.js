@@ -8,7 +8,7 @@ const api = axios.create({
   // En tu casa usa localhost. En producción usa '/api' relativo para que Nginx redirija al backend
   baseURL: isDevelopment 
     ? "http://127.0.0.1:8000/api" 
-    : "/api", 
+    : "/api/", 
 });
 
 api.interceptors.request.use((config) => {
