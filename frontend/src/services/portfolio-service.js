@@ -5,7 +5,8 @@ const isDevelopment = import.meta.env.MODE === "development";
 // 🎯 DETECCIÓN DINÁMICA: Usa localhost en tu compu o la URL del campus en producción
 const API_URL = isDevelopment 
   ? "http://localhost:8000/api" 
-  : `${import.meta.env.VITE_API_URL}/api`;
+  : "https://api.app4.academia.ar/api";
+  // : `${import.meta.env.VITE_API_URL}/api`
 
 /**
  * 1. OBTENER PORTFOLIO (Usado por DashboardPage)
