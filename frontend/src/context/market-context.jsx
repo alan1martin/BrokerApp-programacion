@@ -16,14 +16,15 @@ export function MarketProvider({ children }) {
   const fetchRealPrices = async () => {
     const token = localStorage.getItem("access");
 
-    // Si el usuario no inició sesión todavía, mantenemos los precios iniciales de simulación
-    if (!token) {
+    // Si no hay token o es el de prueba ficticio y Django nos rebota con 401, 
+    // mantenemos los activos iniciales para que la interfaz no quede vacía.
+    if (!token || token === "token_falso_de_prueba_123") {
+      setAssets(INITIAL_ASSETS);
       setLoadingMarket(false);
       return;
     }
 
     try {
-      // Consultamos los activos en paralelo directo a tu Django con Yahoo Finance
       const symbolsToFetch = ["AAPL", "TSLA", "NVDA", "BTC"];
       
       const pricePromises = symbolsToFetch.map(async (symbol) => {
@@ -36,34 +37,42 @@ export function MarketProvider({ children }) {
             }
           });
 
+          // Si el token es válido y Django responde bien (200 OK)
           if (response.ok) {
             const data = await response.json();
             return {
               symbol: symbol,
-              currentPrice: data.currentPrice,
+              currentPrice: data.currentPrice || data.price, // Mapeo flexible por las dudas
               name: data.companyName || symbol
             };
+          }
+          
+          // Si Django tira 401 u otro error, retornamos null para manejar el fallback por activo
+          if (response.status === 401) {
+            console.warn(`Django rechazó la autenticación (401) para el activo: ${symbol}. Usando simulación.`);
           }
         } catch (e) {
           console.error(`No se pudo obtener precio real de ${symbol} desde Django:`, e);
         }
-        return null; // Si falla, retorna null para no romper el flujo
+        return null;
       });
 
       const updatedPricesResults = await Promise.all(pricePromises);
 
-      // Cruzamos los datos obtenidos con el estado de React
+      // Cruzamos los datos obtenidos. Si un activo vino en null (por el 401), conserva el precio base simulado.
       setAssets((prevAssets) =>
         prevAssets.map((asset) => {
           const updatedInfo = updatedPricesResults.find(r => r && r.symbol === asset.symbol);
-          if (updatedInfo) {
+          if (updatedInfo && updatedInfo.currentPrice) {
             return {
               ...asset,
               name: updatedInfo.name,
-              currentPrice: updatedInfo.currentPrice
+              currentPrice: parseFloat(updatedInfo.currentPrice)
             };
           }
-          return asset; // Mantiene el fallback si falló ese ticker individual
+          // Mecanismo de emergencia: Si Django falló o tiró 401, dejamos el precio de INITIAL_ASSETS
+          const fallbackAsset = INITIAL_ASSETS.find(a => a.symbol === asset.symbol);
+          return fallbackAsset ? { ...asset, currentPrice: fallbackAsset.currentPrice } : asset;
         })
       );
 
@@ -76,7 +85,7 @@ export function MarketProvider({ children }) {
 
   useEffect(() => {
     fetchRealPrices();
-    // Actualiza cada 30 segundos consumiendo tu backend de forma segura
+    // Actualiza cada 30 segundos de forma segura
     const interval = setInterval(fetchRealPrices, 30000);
     return () => clearInterval(interval);
   }, []);

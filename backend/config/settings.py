@@ -11,8 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
-
-#Agregamos esto
+from datetime import timedelta
 from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -28,7 +27,8 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', cast=bool)
 
-ALLOWED_HOSTS = []
+# MODIFICADO: Permitimos que Django responda en el subdominio de la facultad y en local
+ALLOWED_HOSTS = ['api.app4.academia.ar', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -49,21 +49,20 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    # Resto
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
+    'django.middleware.common.CommonMiddleware',  # Limpiado el duplicado que estaba acá
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-#Cors
-
+# Cors
+# MODIFICADO: Permitimos que el navegador acepte peticiones desde el frontend de producción
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "https://app4.academia.ar",
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -90,16 +89,15 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-'default': {
-'ENGINE': 'django.db.backends.postgresql',
-'NAME': config('DB_NAME'),
-'USER': config('DB_USER'),
-'PASSWORD': config('DB_PASSWORD'),
-'HOST': config('DB_HOST'),
-'PORT': config('DB_PORT'),
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST'),
+        'PORT': config('DB_PORT'),
+    }
 }
-}
-
 
 
 # Password validation
@@ -139,8 +137,6 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 # Usar JWT para autenticar usuarios
-from datetime import timedelta
-
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',

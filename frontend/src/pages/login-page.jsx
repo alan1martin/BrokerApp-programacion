@@ -18,9 +18,9 @@ function LoginPage() {
     e.preventDefault();
     console.log("Iniciando sesión con:", formData);
 
-    //  Simulación temporal (Hasta que el profe levante Django):
-    // Guardamos un token de prueba para que ProtectedRoute nos deje pasar
-    localStorage.setItem("access_token", "token_falso_de_prueba_123");
+    // SOLUCCIÓN: Guardamos la clave como "access" para que machee con el portfolio-service
+    localStorage.setItem("access", "token_falso_de_prueba_123"); 
+    
     navigate("/");
   };
 

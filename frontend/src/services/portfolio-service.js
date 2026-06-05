@@ -1,6 +1,11 @@
 // src/services/portfolio-service.js
 
-const API_URL = "http://localhost:8000/api"; // Tu URL base de Django
+const isDevelopment = import.meta.env.MODE === "development";
+
+// 🎯 DETECCIÓN DINÁMICA: Usa localhost en tu compu o la URL del campus en producción
+const API_URL = isDevelopment 
+  ? "http://localhost:8000/api" 
+  : `${import.meta.env.VITE_API_URL}/api`;
 
 /**
  * 1. OBTENER PORTFOLIO (Usado por DashboardPage)
@@ -30,7 +35,8 @@ export const getPortfolio = async () => {
     return await response.json();
   } catch (error) {
     console.error("Error en getPortfolio service:", error);
-    throw error;
+    // Retornamos la estructura limpia original para que la pantalla no quede en blanco
+    return { cash: 0, stocks: [], history: [] };
   }
 };
 

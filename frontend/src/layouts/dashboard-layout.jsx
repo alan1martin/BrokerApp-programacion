@@ -8,7 +8,6 @@ import {
 import { 
   TrendingUp as LogoIcon, 
   Logout, 
-  Dashboard, 
   BarChart, 
   AccountBalanceWallet, 
   SwapHoriz, 
@@ -28,7 +27,7 @@ function DashboardLayout() {
   const [openPortfolio, setOpenPortfolio] = useState(false);
 
   const handleLogout = () => {
-    localStorage.removeItem("access_token");
+    localStorage.removeItem("access"); // Limpiamos el token correcto
     navigate("/login");
   };
 
@@ -59,7 +58,9 @@ function DashboardLayout() {
           borderBottom: "1px solid #1c2025" 
         }}
       >
-        <Toolbar sx={{ justifyContent: "space-between", px: "24px !important" }}>
+        {/* CORREGIDO: justifyContent ahora viaja seguro adentro de sx */}
+        <Toolbar sx={{ display: "flex", justifyContent: "space-between", px: "24px !important" }}>
+          
           {/* Logo Corporativo de Peak Investments */}
           <Stack direction="row" alignItems="center" spacing={1.5}>
             <Box 
@@ -115,7 +116,6 @@ function DashboardLayout() {
 
           <Collapse in={openAccount} timeout="auto" unmountOnExit>
             <List component="div" disablePadding sx={{ pl: 3.5 }}>
-              {/* Al hacer clic en Estado de Cuenta, te lleva a la página principal */}
               <ListItemButton onClick={() => navigate("/")} sx={{ py: 0.6 }}>
                 <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: openAccount ? "#4caf50" : "gray" }} />
                 <ListItemText primary="Estado de Cuenta" slotProps={{ primary: { fontSize: "0.85rem" } }} />

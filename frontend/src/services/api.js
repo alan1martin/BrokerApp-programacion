@@ -4,10 +4,9 @@ import axios from "axios";
 const isDevelopment = import.meta.env.MODE === "development";
 
 const api = axios.create({
-  // Cambiamos a 'api/' relativo al directorio actual del deploy para el proxy de Nginx
-  baseURL: isDevelopment 
-    ? "http://127.0.0.1:8000/api/" 
-    : "/api/", 
+  baseURL: isDevelopment
+    ? "http://127.0.0.1:8000/api/"
+    : import.meta.env.VITE_API_URL + "/api/",
 });
 
 api.interceptors.request.use((config) => {
