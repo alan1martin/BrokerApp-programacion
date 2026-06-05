@@ -1,4 +1,3 @@
-
 from rest_framework import serializers
 from .models import Portfolio, Position, Transaction
 
@@ -18,16 +17,19 @@ class PortfolioSerializer(serializers.ModelSerializer):
     # Traemos las posiciones reales anidadas dentro del portfolio
     positions = PositionSerializer(many=True, read_only=True)
     
-    # Apuntamos total_value a la función dinámica 'calculated_total_value' que creamos en el modelo
+    # Apuntamos total_value a la función dinámica 'calculated_total_value' del modelo
     total_value = serializers.ReadOnlyField(source='calculated_total_value')
+    
+    # PUENTE CLAVE: Mapeamos 'cash_balance' de la BD para que viaje a React como 'cash'
+    cash = serializers.ReadOnlyField(source='cash_balance')
 
     class Meta:
         model = Portfolio
-        fields = ['id', 'total_value', 'positions']
+        fields = ['id', 'total_value', 'cash', 'positions'] # 🟢 Incluido 'cash' en la salida
+
 
 class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = ['id', 'symbol', 'transaction_type', 'quantity', 'price', 'timestamp']
         read_only_fields = ['id', 'timestamp']
-        

@@ -1,27 +1,43 @@
 // src/pages/login-page.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, TextField, Button, Typography, Stack, InputAdornment, IconButton, Card } from "@mui/material";
+import { Box, TextField, Button, Typography, Stack, InputAdornment, IconButton, Card, Alert } from "@mui/material";
 import { Visibility, VisibilityOff, TrendingUp as LogoIcon } from "@mui/icons-material";
+import { loginUser } from "../services/auth-service"; // IMPORTACIÓN CLAVE: Conectamos tu servicio de autenticación
 
 function LoginPage() {
-  const navigate = useNavigate(); //  2. Inicializamos el navegador
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ username: "", password: "" });
+  const [errorMsg, setErrorMsg] = useState(""); // Para mostrar si el usuario/clave están mal
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // 3. Actualizamos la función de envío:
-  const handleSubmit = (e) => {
+  // FUNCIÓN CORREGIDA: Ahora es asíncrona e impacta contra Django
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Iniciando sesión con:", formData);
-
-    // SOLUCCIÓN: Guardamos la clave como "access" para que machee con el portfolio-service
-    localStorage.setItem("access", "token_falso_de_prueba_123"); 
+    setErrorMsg(""); // Limpiamos errores previos
     
-    navigate("/");
+    try {
+      console.log("Enviando credenciales a Django...");
+      const data = await loginUser(formData.username, formData.password);
+      
+      // CAPTURA EXITOSA: Django devuelve { access: "...", refresh: "..." }
+      if (data && data.access) {
+        localStorage.setItem("access", data.access);
+        localStorage.setItem("refresh", data.refresh);
+        
+        console.log("¡Token JWT real almacenado con éxito!");
+        navigate("/"); // Nos vamos al Dashboard
+      } else {
+        setErrorMsg("El servidor no devolvió los tokens esperados.");
+      }
+    } catch (error) {
+      console.error("Error en el login visual:", error);
+      setErrorMsg("Usuario o contraseña incorrectos. Verificá los datos en Django.");
+    }
   };
 
   return (
@@ -60,10 +76,9 @@ function LoginPage() {
           }
         }}
       >
-        {/* Contenedor estirado a 850px para adueñarse del centro vacío */}
         <Stack spacing={4} sx={{ zIndex: 3, color: "white", maxWidth: "850px", width: "100%", pr: { md: 4 } }}>
           
-          {/* Logo Animado + Nombre */}
+          {/* Contenedor de Marca Animado al Entrar */}
           <Stack 
             direction="row" 
             alignItems="center" 
@@ -76,14 +91,24 @@ function LoginPage() {
               }
             }}
           >
-            <Box
-              sx={{
-                display: "flex",
-                animation: "floatAndPulse 3s ease-in-out infinite 1s",
+            {/* LOGO CON FLOTE CORREGIDO */}
+            <Box 
+              sx={{ 
+                display: "inline-flex",
+                animation: "floatAndPulse 3s ease-in-out infinite",
                 "@keyframes floatAndPulse": {
-                  "0%": { transform: "translateY(0px) scale(1)", filter: "drop-shadow(0 0 2px rgba(76, 175, 80, 0.4))" },
-                  "50%": { transform: "translateY(-6px) scale(1.05)", filter: "drop-shadow(0 0 12px rgba(76, 175, 80, 0.8))" },
-                  "100%": { transform: "translateY(0px) scale(1)", filter: "drop-shadow(0 0 2px rgba(76, 175, 80, 0.4))" }
+                  "0%": { 
+                    transform: "translateY(0px) scale(1)", 
+                    filter: "drop-shadow(0 0 2px rgba(76, 175, 80, 0.3))" 
+                  },
+                  "50%": { 
+                    transform: "translateY(-8px) scale(1.08)", 
+                    filter: "drop-shadow(0 0 14px rgba(76, 175, 80, 0.7))" 
+                  },
+                  "100%": { 
+                    transform: "translateY(0px) scale(1)", 
+                    filter: "drop-shadow(0 0 2px rgba(76, 175, 80, 0.3))" 
+                  }
                 }
               }}
             >
@@ -94,31 +119,13 @@ function LoginPage() {
             </Typography>
           </Stack>
 
-          {/* Título Principal Gigante */}
-          <Typography 
-            variant="h2" 
-            fontWeight={700} 
-            sx={{ 
-              lineHeight: 1.15,
-              letterSpacing: "-0.02em"
-            }}
-          >
+          <Typography variant="h2" fontWeight={700} sx={{ lineHeight: 1.15, letterSpacing: "-0.02em" }}>
             Tomá el control de tu futuro financiero.
           </Typography>
 
-          {/* Párrafo Descriptivo Ampliado */}
-          <Typography 
-            variant="h6" 
-            fontWeight={400}
-            sx={{ 
-              color: "#9ca3af", 
-              lineHeight: 1.6,
-              maxWidth: "750px"
-            }}
-          >
+          <Typography variant="h6" fontWeight={400} sx={{ color: "#9ca3af", lineHeight: 1.6, maxWidth: "750px" }}>
             Operá acciones del Merval, CEDEARs y gestioná tu cartera en tiempo real con herramientas avanzadas de análisis de mercado.
           </Typography>
-          
         </Stack>
       </Box>
 
@@ -137,19 +144,23 @@ function LoginPage() {
       >
         <Card elevation={0} sx={{ width: "100%", maxWidth: 380, bgcolor: "transparent", color: "white" }}>
           
-          {/* Logo visible solo en pantallas chicas/celulares */}
           <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 4, display: { xs: "flex", md: "none" } }}>
             <LogoIcon sx={{ color: "#4caf50", fontSize: 32 }} />
             <Typography variant="h5" fontWeight={800}>PEAK INVESTMENTS</Typography>
           </Stack>
 
-          {/* Encabezado del Login */}
           <Stack spacing={1} sx={{ mb: 4 }}>
             <Typography variant="h4" fontWeight={700}>Iniciar Sesión</Typography>
             <Typography variant="body2" color="gray">¡Hola! Ingresá tus credenciales para acceder al broker.</Typography>
           </Stack>
 
-          {/* Formulario */}
+          {/* Alerta de Error en pantalla si las credenciales fallan */}
+          {errorMsg && (
+            <Alert severity="error" sx={{ mb: 3, bgcolor: "#2a1215", color: "#ff8a80", "& .MuiAlert-icon": { color: "#ff5252" } }}>
+              {errorMsg}
+            </Alert>
+          )}
+
           <Box component="form" onSubmit={handleSubmit}>
             <Stack spacing={3}>
               <TextField
@@ -235,7 +246,6 @@ function LoginPage() {
           </Typography>
         </Card>
       </Box>
-
     </Box>
   );
 }

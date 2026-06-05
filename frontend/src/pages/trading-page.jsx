@@ -1,18 +1,4 @@
-import { 
-  Grid, 
-  Typography, 
-  Card, 
-  CardContent, 
-  TextField, 
-  Button, 
-  Stack, 
-  Tabs, 
-  Tab, 
-  Box,
-  MenuItem,
-  Alert,
-  CircularProgress
-} from "@mui/material";
+import { Grid, Typography, Card, CardContent, TextField, Button, Stack, Tabs, Tab, Box, MenuItem, Alert, CircularProgress } from "@mui/material";
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom"; 
 import { executeTrade } from "../services/portfolio-service";
@@ -23,7 +9,7 @@ function TradingPage() {
   const { assets, loadingMarket } = useMarket();
   const location = useLocation(); 
 
-  const [action, setAction] = useState(0); // 0 = COMPRAR, 1 = VENDER
+  const [action, setAction] = useState(0); 
   const [selectedSymbol, setSelectedSymbol] = useState("AAPL");
   const [quantity, setQuantity] = useState("");
   
@@ -42,7 +28,6 @@ function TradingPage() {
     ? (parseFloat(quantity) * currentAsset.currentPrice).toFixed(2) 
     : "0.00";
 
-  // LÓGICA DE SIMULACIÓN DIARIA: Variación del día (Rojo/Verde)
   const isUp = selectedSymbol.charCodeAt(0) % 2 === 0; 
   const changePercent = isUp ? 2.45 : -1.20;
   const priceDiff = currentAsset ? (currentAsset.currentPrice * (changePercent / 100)) : 0;
@@ -50,6 +35,54 @@ function TradingPage() {
   const handleActionChange = (event, newValue) => {
     setAction(newValue);
     setStatusMessage(null); 
+  };
+
+  // MOTOR DE SIMULACIÓN LOCAL AUXILIAR
+  const executeLocalSimulatedTrade = (tradeData) => {
+    const localPortfolio = JSON.parse(localStorage.getItem("simulated_portfolio")) || { cash: 5000, total_value: 5000, positions: [] };
+    const localHistory = JSON.parse(localStorage.getItem("simulated_history")) || [];
+    
+    const cost = tradeData.quantity * tradeData.price;
+
+    if (tradeData.transaction_type === "BUY") {
+      if (localPortfolio.cash < cost) throw new Error("Fondos simulados insuficientes para realizar la compra.");
+      localPortfolio.cash -= cost;
+
+      const existingPos = localPortfolio.positions.find(p => p.symbol === tradeData.symbol);
+      if (existingPos) {
+        const totalQty = parseFloat(existingPos.quantity) + tradeData.quantity;
+        existingPos.average_price = ((parseFloat(existingPos.average_price) * parseFloat(existingPos.quantity)) + cost) / totalQty;
+        existingPos.quantity = totalQty;
+      } else {
+        localPortfolio.positions.push({
+          symbol: tradeData.symbol,
+          quantity: tradeData.quantity,
+          average_price: tradeData.price
+        });
+      }
+    } else { // SELL
+      const existingPos = localPortfolio.positions.find(p => p.symbol === tradeData.symbol);
+      if (!existingPos || parseFloat(existingPos.quantity) < tradeData.quantity) {
+        throw new Error("No tenés suficientes acciones de este activo para vender.");
+      }
+      localPortfolio.cash += cost;
+      existingPos.quantity = parseFloat(existingPos.quantity) - tradeData.quantity;
+      
+      // Limpiamos posiciones vacías
+      localPortfolio.positions = localPortfolio.positions.filter(p => parseFloat(p.quantity) > 0);
+    }
+
+    // Guardar Historial
+    localHistory.unshift({
+      timestamp: new Date().toISOString(),
+      symbol: tradeData.symbol,
+      transaction_type: tradeData.transaction_type,
+      quantity: tradeData.quantity,
+      price: tradeData.price
+    });
+
+    localStorage.setItem("simulated_portfolio", JSON.stringify(localPortfolio));
+    localStorage.setItem("simulated_history", JSON.stringify(localHistory));
   };
 
   const handleExecuteTrade = async (e) => { 
@@ -65,19 +98,24 @@ function TradingPage() {
     };
 
     try {
+      // Intentamos pegarle a Django primero
       const response = await executeTrade(tradeData);
-      
-      setStatusMessage({
-        type: "success",
-        text: response.message
-      });
+      setStatusMessage({ type: "success", text: response.message || "Operación procesada en backend." });
       setQuantity(""); 
     } catch (error) {
-      const serverError = error.response?.data?.error || "Hubo un error al procesar la orden.";
-      setStatusMessage({
-        type: "error",
-        text: typeof serverError === 'object' ? JSON.stringify(serverError) : serverError
-      });
+      console.warn("Backend inalcanzable o 401. Derivando transacción a simulación local...");
+      
+      try {
+        // Si Django falla, se ejecuta local de inmediato sin romper la pantalla
+        executeLocalSimulatedTrade(tradeData);
+        setStatusMessage({
+          type: "success",
+          text: `[Modo Simulación] ¡Orden de ${action === 0 ? 'Compra' : 'Venta'} completada con éxito localmente!`
+        });
+        setQuantity("");
+      } catch (simError) {
+        setStatusMessage({ type: "error", text: simError.message });
+      }
     } finally {
       setLoading(false);
     }
@@ -93,9 +131,7 @@ function TradingPage() {
   
   return (
     <Stack spacing={4}>
-      <Typography variant="h4" fontWeight={700}>
-        Operar Activos
-      </Typography>
+      <Typography variant="h4" fontWeight={700}>Operar Activos</Typography>
 
       {statusMessage && (
         <Alert severity={statusMessage.type} variant="filled" sx={{ width: "100%" }}>
@@ -104,8 +140,6 @@ function TradingPage() {
       )}
 
       <Grid container spacing={3}>
-        
-        {/* COLUMNA IZQUIERDA: Info del Activo y Gráfico Avanzado */}
         <Grid size={{ xs: 12, md: 7, lg: 8 }}>
           <Card sx={{ backgroundColor: "#15181e", height: "100%" }}>
             <CardContent>
@@ -113,30 +147,21 @@ function TradingPage() {
                 {currentAsset?.name} ({currentAsset?.symbol})
               </Typography>
               
-              {/*  Bloque Financiero con Rendimiento Dinámico En Verde/Rojo Forzado */}
               <Box sx={{ display: "flex", alignItems: "baseline", gap: 2, my: 1.5 }}>
                 <Typography variant="h3" fontWeight={800} color="white">
                   ${currentAsset?.currentPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                 </Typography>
                 
-                <Typography 
-                  variant="h6" 
-                  fontWeight={700} 
-                  sx={{ color: isUp ? "#4caf50" : "#f44336" }}
-                >
-                  {isUp ? "+" : ""}{priceDiff.toLocaleString("en-US", { minimumFractionDigits: 2 })} {isUp ? "+" : ""}{changePercent.toFixed(2)}%
+                <Typography variant="h6" fontWeight={700} sx={{ color: isUp ? "#4caf50" : "#f44336" }}>
+                  {isUp ? "+" : ""}{priceDiff.toLocaleString("en-US", { minimumFractionDigits: 2 })} ({isUp ? "+" : ""}{changePercent.toFixed(2)}%)
                 </Typography>
-
-                <Typography variant="caption" color="gray" fontWeight={600}>
-                 USD
-                </Typography>
+                <Typography variant="caption" color="gray" fontWeight={600}>USD</Typography>
               </Box>
 
               <Typography color="gray" variant="body2" sx={{ mb: 2 }}>
                 Mercado Real • Precios en tiempo real
               </Typography>
               
-              {/* Selector de gráfico inteligente */}
               {currentAsset && (
                 <TradingChart 
                   symbol={currentAsset.symbol} 
@@ -148,7 +173,6 @@ function TradingPage() {
           </Card>
         </Grid>
 
-        {/* COLUMNA DERECHA: Formulario */}
         <Grid size={{ xs: 12, md: 5, lg: 4 }}>
           <Card sx={{ backgroundColor: "#15181e" }}>
             <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
@@ -167,7 +191,6 @@ function TradingPage() {
             <CardContent>
               <Box component="form" onSubmit={handleExecuteTrade}>
                 <Stack spacing={3}>
-                  
                   <TextField
                     select
                     label="Seleccionar Activo"
@@ -195,6 +218,7 @@ function TradingPage() {
                     required
                     fullWidth
                     placeholder="0.00"
+                    slotProps={{ htmlInput: { step: "any" } }}
                   />
 
                   <TextField
@@ -204,15 +228,7 @@ function TradingPage() {
                     fullWidth
                   />
 
-                  <Box 
-                    sx={{ 
-                      p: 2, 
-                      backgroundColor: "#1e222b", 
-                      borderRadius: 1, 
-                      display: "flex", 
-                      justifyContent: "space-between" 
-                    }}
-                  >
+                  <Box sx={{ p: 2, backgroundColor: "#1e222b", borderRadius: 1, display: "flex", justifyContent: "space-between" }}>
                     <Typography color="gray">Total Estimado:</Typography>
                     <Typography fontWeight={700} color="white">
                       ${parseFloat(estimatedTotal).toLocaleString("en-US", { minimumFractionDigits: 2 })}
@@ -233,7 +249,6 @@ function TradingPage() {
                       : action === 0 ? `Comprar ${selectedSymbol}` : `Vender ${selectedSymbol}`
                     }
                   </Button>
-
                 </Stack>
               </Box>
             </CardContent>

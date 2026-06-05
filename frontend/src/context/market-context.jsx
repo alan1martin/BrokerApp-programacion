@@ -15,9 +15,13 @@ export function MarketProvider({ children }) {
 
   const fetchRealPrices = async () => {
     const token = localStorage.getItem("access");
+    const isDevelopment = import.meta.env.MODE === "development";
+    
+    // URL base dinámica según el entorno
+    const BASE_API = isDevelopment 
+      ? "http://localhost:8000/api" 
+      : "https://api.app4.academia.ar/api";
 
-    // Si no hay token o es el de prueba ficticio y Django nos rebota con 401, 
-    // mantenemos los activos iniciales para que la interfaz no quede vacía.
     if (!token || token === "token_falso_de_prueba_123") {
       setAssets(INITIAL_ASSETS);
       setLoadingMarket(false);
@@ -29,7 +33,7 @@ export function MarketProvider({ children }) {
       
       const pricePromises = symbolsToFetch.map(async (symbol) => {
         try {
-          const response = await fetch(`http://localhost:8000/api/portfolio/history/${symbol}/`, {
+          const response = await fetch(`${BASE_API}/portfolio/history/${symbol}/`, {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
@@ -37,17 +41,15 @@ export function MarketProvider({ children }) {
             }
           });
 
-          // Si el token es válido y Django responde bien (200 OK)
           if (response.ok) {
             const data = await response.json();
             return {
               symbol: symbol,
-              currentPrice: data.currentPrice || data.price, // Mapeo flexible por las dudas
+              currentPrice: data.currentPrice || data.price,
               name: data.companyName || symbol
             };
           }
           
-          // Si Django tira 401 u otro error, retornamos null para manejar el fallback por activo
           if (response.status === 401) {
             console.warn(`Django rechazó la autenticación (401) para el activo: ${symbol}. Usando simulación.`);
           }
@@ -59,7 +61,6 @@ export function MarketProvider({ children }) {
 
       const updatedPricesResults = await Promise.all(pricePromises);
 
-      // Cruzamos los datos obtenidos. Si un activo vino en null (por el 401), conserva el precio base simulado.
       setAssets((prevAssets) =>
         prevAssets.map((asset) => {
           const updatedInfo = updatedPricesResults.find(r => r && r.symbol === asset.symbol);
@@ -70,7 +71,6 @@ export function MarketProvider({ children }) {
               currentPrice: parseFloat(updatedInfo.currentPrice)
             };
           }
-          // Mecanismo de emergencia: Si Django falló o tiró 401, dejamos el precio de INITIAL_ASSETS
           const fallbackAsset = INITIAL_ASSETS.find(a => a.symbol === asset.symbol);
           return fallbackAsset ? { ...asset, currentPrice: fallbackAsset.currentPrice } : asset;
         })
@@ -85,7 +85,6 @@ export function MarketProvider({ children }) {
 
   useEffect(() => {
     fetchRealPrices();
-    // Actualiza cada 30 segundos de forma segura
     const interval = setInterval(fetchRealPrices, 30000);
     return () => clearInterval(interval);
   }, []);
