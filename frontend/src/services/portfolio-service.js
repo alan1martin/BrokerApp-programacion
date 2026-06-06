@@ -7,12 +7,10 @@ import api from "./api"; // Importamos tu instancia centralizada de Axios
  */
 export const getPortfolio = async () => {
   try {
-    // Axios ya incluye el Authorization Bearer gracias al interceptor de api.js
     const response = await api.get("portfolio/");
     return response.data;
   } catch (error) {
     console.error("Error en getPortfolio service:", error.response?.data || error.message);
-    // Lanzamos el error para que el "catch" de DashboardPage active la simulación si da 401
     throw error;
   }
 };
@@ -56,6 +54,52 @@ export const getTransactionHistory = async () => {
     return response.data;
   } catch (error) {
     console.error("Error en getTransactionHistory service:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+/**
+ * 5. DEPOSITAR O RETIRAR FONDOS (Migrado a Axios)
+ * /api/portfolio/cash/
+ */
+export const manageCashFunds = async (transactionType, amount) => {
+  try {
+    const response = await api.post("portfolio/cash/", {
+      transaction_type: transactionType,
+      amount: amount
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error en manageCashFunds service:", error.response?.data || error.message);
+    const errorMsg = error.response?.data?.error || "Error al procesar los fondos.";
+    throw new Error(errorMsg);
+  }
+};
+
+/**
+ * 6. OBTENER COMPOSICIÓN DE ACTIVOS (Fase 3 - ¡Agregado!) 
+ * /api/portfolio/composition/
+ */
+export const getAssetComposition = async () => {
+  try {
+    const response = await api.get("portfolio/composition/");
+    return response.data;
+  } catch (error) {
+    console.error("Error en getAssetComposition service:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+/**
+ * 7. OBTENER COTIZACIONES EN VIVO (Fase 4 - ¡Agregado!)
+ * /api/portfolio/market-quotes/
+ */
+export const getMarketQuotes = async () => {
+  try {
+    const response = await api.get("portfolio/market-quotes/");
+    return response.data;
+  } catch (error) {
+    console.error("Error en getMarketQuotes service:", error.response?.data || error.message);
     throw error;
   }
 };

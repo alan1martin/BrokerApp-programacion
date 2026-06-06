@@ -1,4 +1,4 @@
-
+// src/pages/settings-page.jsx
 import { Typography, Stack, Card, CardContent, Button, Divider, Alert } from "@mui/material";
 import { useState } from "react";
 import { resetAccount } from "../services/portfolio-service";
@@ -28,7 +28,7 @@ function SettingsPage() {
   return (
     <Stack spacing={4} sx={{ maxWidth: 600 }}>
       <Stack>
-        <Typography variant="h4" fontWeight={700}>
+        <Typography variant="h4" fontWeight={700} color="white">
           Configuración de Cuenta
         </Typography>
         <Typography color="gray" variant="body2">
@@ -42,7 +42,7 @@ function SettingsPage() {
         </Alert>
       )}
 
-      <Card sx={{ backgroundColor: "#15181e", borderRadius: 2 }}>
+      <Card sx={{ backgroundColor: "#15181e", borderRadius: 2, border: "1px solid #1c2025" }}>
         <CardContent sx={{ p: 4 }}>
           <Typography variant="h6" fontWeight={700} color="error.main" gutterBottom>
             Zona de Peligro
@@ -68,7 +68,7 @@ function SettingsPage() {
               startIcon={<RestartAltIcon />}
               onClick={handleReset}
               disabled={loading}
-              sx={{ fontWeight: 700, textTransform: "none" }}
+              sx={{ fontWeight: 700, textTransform: "none", borderRadius: 1.5 }}
             >
               {loading ? "Reseteando..." : "Resetear Cuenta"}
             </Button>

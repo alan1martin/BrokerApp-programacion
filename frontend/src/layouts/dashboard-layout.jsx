@@ -3,7 +3,8 @@ import { useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { 
   Box, AppBar, Toolbar, Typography, Avatar, IconButton, Stack,
-  List, ListItemButton, ListItemIcon, ListItemText, Collapse 
+  List, ListItemButton, ListItemIcon, ListItemText, Collapse,
+  Modal, Card, CardContent, TextField, InputAdornment, Button, Alert
 } from "@mui/material";
 import { 
   TrendingUp as LogoIcon, 
@@ -14,8 +15,12 @@ import {
   Settings,
   ExpandLess,
   ExpandMore,
-  FiberManualRecord
+  FiberManualRecord,
+  Close as CloseIcon,
+  ArrowUpward,
+  ArrowDownward
 } from "@mui/icons-material";
+import { manageCashFunds } from "../services/portfolio-service";
 
 function DashboardLayout() {
   const navigate = useNavigate();
@@ -26,12 +31,51 @@ function DashboardLayout() {
   const [openTrading, setOpenTrading] = useState(false);
   const [openPortfolio, setOpenPortfolio] = useState(false);
 
+  // NUEVOS ESTADOS PARA OPERAR FONDOS (FASE 2)
+  const [openCashModal, setOpenCashModal] = useState(false);
+  const [amount, setAmount] = useState("");
+  const [cashLoading, setCashLoading] = useState(false);
+  const [message, setMessage] = useState(null);
+
   const handleLogout = () => {
-    localStorage.removeItem("access"); // Limpiamos el token correcto
+    localStorage.removeItem("access");
     navigate("/login");
   };
 
-  // Estilo exacto de logos circulares idéntico a las tarjetas de estado de cuenta
+  // Handler para depósitos y retiros
+  const handleCashAction = async (actionType) => {
+    if (!amount || parseFloat(amount) <= 0) {
+      setMessage({ type: "error", text: "Por favor, ingresá un monto válido mayor a 0." });
+      return;
+    }
+
+    setCashLoading(true);
+    setMessage(null);
+
+    try {
+      const data = await manageCashFunds(actionType, amount);
+      setMessage({ type: "success", text: data.message });
+      setAmount(""); // Reseteamos el input
+      
+      // Opcional: Recargar la ventana a los 1.5s para forzar refresco de saldos en Dashboard/Portfolio
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+
+    } catch (error) {
+      setMessage({ type: "error", text: error.message });
+    } finally {
+      setCashLoading(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setOpenCashModal(false);
+    setAmount("");
+    setMessage(null);
+  };
+
+  // Estilo exacto de logos circulares
   const iconContainerStyle = (bgColor) => ({
     display: "flex",
     alignItems: "center",
@@ -58,17 +102,9 @@ function DashboardLayout() {
           borderBottom: "1px solid #1c2025" 
         }}
       >
-        {/* CORREGIDO: justifyContent ahora viaja seguro adentro de sx */}
         <Toolbar sx={{ display: "flex", justifyContent: "space-between", px: "24px !important" }}>
-          
-          {/* Logo Corporativo de Peak Investments */}
           <Stack direction="row" alignItems="center" spacing={1.5}>
-            <Box 
-              sx={{ 
-                display: "flex", 
-                alignItems: "center"
-              }}
-            >
+            <Box sx={{ display: "flex", alignItems: "center" }}>
               <LogoIcon sx={{ color: "#4caf50", fontSize: 26 }} />
             </Box>
             <Typography variant="h6" fontWeight={800} letterSpacing={0.5} sx={{ color: "white", fontSize: "1.05rem" }}>
@@ -76,7 +112,6 @@ function DashboardLayout() {
             </Typography>
           </Stack>
 
-          {/* Sección de Perfil del Usuario */}
           <Stack direction="row" alignItems="center" spacing={2}>
             <Typography variant="body2" fontWeight={600} sx={{ color: "#9ca3af" }}>
               Martín
@@ -91,7 +126,7 @@ function DashboardLayout() {
         </Toolbar>
       </AppBar>
 
-      {/* ================= MENÚ IZQUIERDO (SIDEBAR REESTRUCTURADO) ================= */}
+      {/* ================= MENÚ IZQUIERDO (SIDEBAR) ================= */}
       <Box 
         component="nav" 
         sx={{ 
@@ -105,7 +140,7 @@ function DashboardLayout() {
       >
         <List sx={{ px: 1.5, py: 3, "& .MuiListItemButton-root": { borderRadius: 2, mb: 0.5, color: "#9ca3af", "&:hover": { bgcolor: "#1c2025", color: "white" } } }}>
           
-          {/* 1. MI CUENTA (Desplegable Premium) */}
+          {/* 1. MI CUENTA */}
           <ListItemButton onClick={() => setOpenAccount(!openAccount)}>
             <ListItemIcon sx={iconContainerStyle("rgba(76, 175, 80, 0.15)")}>
               <AccountBalanceWallet sx={{ color: "#4caf50", fontSize: 18 }} />
@@ -117,7 +152,7 @@ function DashboardLayout() {
           <Collapse in={openAccount} timeout="auto" unmountOnExit>
             <List component="div" disablePadding sx={{ pl: 3.5 }}>
               <ListItemButton onClick={() => navigate("/")} sx={{ py: 0.6 }}>
-                <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: openAccount ? "#4caf50" : "gray" }} />
+                <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#4caf50" }} />
                 <ListItemText primary="Estado de Cuenta" slotProps={{ primary: { fontSize: "0.85rem" } }} />
               </ListItemButton>
               
@@ -131,14 +166,15 @@ function DashboardLayout() {
                 <ListItemText primary="Perfil de Inversor" slotProps={{ primary: { fontSize: "0.85rem" } }} />
               </ListItemButton>
 
-              <ListItemButton sx={{ py: 0.6 }}>
-                <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "gray" }} />
-                <ListItemText primary="Ingresar / Retirar Dinero" slotProps={{ primary: { fontSize: "0.85rem" } }} />
+              {/* BOTÓN CONFIGURADO: Levanta el modal flotante */}
+              <ListItemButton onClick={() => setOpenCashModal(true)} sx={{ py: 0.6 }}>
+                <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#4caf50" }} />
+                <ListItemText primary="Ingresar / Retirar Dinero" slotProps={{ primary: { fontSize: "0.85rem", color: "white", fontWeight: 600 } }} />
               </ListItemButton>
             </List>
           </Collapse>
 
-          {/* 2. MARKETS (Desplegable Ampliado) */}
+          {/* 2. MARKETS */}
           <ListItemButton onClick={() => setOpenMarkets(!openMarkets)}>
             <ListItemIcon sx={iconContainerStyle("rgba(33, 150, 243, 0.15)")}>
               <BarChart sx={{ color: "#2196f3", fontSize: 18 }} />
@@ -165,32 +201,35 @@ function DashboardLayout() {
           </Collapse>
 
           {/* 3. PORTFOLIO (Desplegable Ampliado) */}
-          <ListItemButton onClick={() => setOpenPortfolio(!openPortfolio)}>
-            <ListItemIcon sx={iconContainerStyle("rgba(156, 39, 176, 0.15)")}>
-              <AccountBalanceWallet sx={{ color: "#9c27b0", fontSize: 18 }} />
-            </ListItemIcon>
-            <ListItemText primary="Portfolio" slotProps={{ primary: { fontSize: "0.9rem", fontWeight: 600 } }} />
-            {openPortfolio ? <ExpandLess sx={{ fontSize: 18 }} /> : <ExpandMore sx={{ fontSize: 18 }} />}
-          </ListItemButton>
+            <ListItemButton onClick={() => setOpenPortfolio(!openPortfolio)}>
+              <ListItemIcon sx={iconContainerStyle("rgba(156, 39, 176, 0.15)")}>
+                <AccountBalanceWallet sx={{ color: "#9c27b0", fontSize: 18 }} />
+              </ListItemIcon>
+              <ListItemText primary="Portfolio" slotProps={{ primary: { fontSize: "0.9rem", fontWeight: 600 } }} />
+              {openPortfolio ? <ExpandLess sx={{ fontSize: 18 }} /> : <ExpandMore sx={{ fontSize: 18 }} />}
+            </ListItemButton>
 
-          <Collapse in={openPortfolio} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding sx={{ pl: 3.5 }}>
-              <ListItemButton sx={{ py: 0.6 }}>
-                <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: openPortfolio ? "#9c27b0" : "gray" }} />
-                <ListItemText primary="Composición de Activos" slotProps={{ primary: { fontSize: "0.85rem" } }} />
-              </ListItemButton>
-              <ListItemButton onClick={() => navigate("/history")} sx={{ py: 0.6 }}>
-                <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "gray" }} />
-                <ListItemText primary="Historial de Órdenes" slotProps={{ primary: { fontSize: "0.85rem" } }} />
-              </ListItemButton>
-              <ListItemButton sx={{ py: 0.6 }}>
-                <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "gray" }} />
-                <ListItemText primary="Dividendos Cobrados" slotProps={{ primary: { fontSize: "0.85rem" } }} />
-              </ListItemButton>
-            </List>
-          </Collapse>
+            <Collapse in={openPortfolio} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding sx={{ pl: 3.5 }}>
+                
+                {/* BOTÓN CONFIGURADO: Ahora viaja correctamente a /composition */}
+                <ListItemButton onClick={() => navigate("/composition")} sx={{ py: 0.6 }}>
+                  <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#9c27b0" }} />
+                  <ListItemText primary="Composición de Activos" slotProps={{ primary: { fontSize: "0.85rem", color: "white", fontWeight: 600 } }} />
+                </ListItemButton>
+                
+                <ListItemButton onClick={() => navigate("/history")} sx={{ py: 0.6 }}>
+                  <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "gray" }} />
+                  <ListItemText primary="Historial de Órdenes" slotProps={{ primary: { fontSize: "0.85rem" } }} />
+                </ListItemButton>
+                <ListItemButton sx={{ py: 0.6 }}>
+                  <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "gray" }} />
+                  <ListItemText primary="Dividendos Cobrados" slotProps={{ primary: { fontSize: "0.85rem" } }} />
+                </ListItemButton>
+              </List>
+            </Collapse>
 
-          {/* 4. TRADING (Desplegable Ampliado) */}
+          {/* 4. TRADING */}
           <ListItemButton onClick={() => setOpenTrading(!openTrading)}>
             <ListItemIcon sx={iconContainerStyle("rgba(255, 152, 0, 0.15)")}>
               <SwapHoriz sx={{ color: "#ff9800", fontSize: 18 }} />
@@ -223,7 +262,6 @@ function DashboardLayout() {
             </ListItemIcon>
             <ListItemText primary="Settings" slotProps={{ primary: { fontSize: "0.9rem", fontWeight: 600 } }} />
           </ListItemButton>
-
         </List>
       </Box>
 
@@ -241,6 +279,121 @@ function DashboardLayout() {
       >
         <Outlet />
       </Box>
+
+      {/* ================= MODAL FLOTANTE: GESTIÓN DE EFECTIVO (FASE 2) ================= */}
+      <Modal
+        open={openCashModal}
+        onClose={handleCloseModal}
+        closeAfterTransition
+        sx={{ display: "flex", alignItems: "center", justifyContent: "center", p: 2 }}
+      >
+        <Card sx={{ backgroundColor: "#15181e", borderRadius: 3, border: "1px solid #1c2025", maxWidth: 450, width: "100%", boxShadow: 24 }}>
+          <CardContent sx={{ p: 4 }}>
+            
+            {/* Cabecera del Modal */}
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+              <Typography variant="h6" fontWeight={800} color="white">
+                Movimiento de Fondos
+              </Typography>
+              <IconButton onClick={handleCloseModal} sx={{ color: "#9ca3af", "&:hover": { color: "white" } }}>
+                <CloseIcon />
+              </IconButton>
+            </Stack>
+
+            <Typography color="gray" variant="body2" sx={{ mb: 3 }}>
+              Ingresá el monto para inyectar o retirar efectivo del saldo disponible de tu cuenta.
+            </Typography>
+
+            {/* Alertas Internas */}
+            {message && (
+              <Alert 
+                severity={message.type} 
+                variant="filled"
+                sx={{ 
+                  mb: 3,
+                  borderRadius: 1.5,
+                  bgcolor: message.type === "error" ? "#2a1215" : "#112a14", 
+                  color: message.type === "error" ? "#ff8a80" : "#a5d6a7",
+                }}
+              >
+                {message.text}
+              </Alert>
+            )}
+
+            {/* Input de Monto */}
+            <Stack spacing={3}>
+              <TextField
+                label="Monto a transaccionar"
+                type="number"
+                variant="outlined"
+                fullWidth
+                autoFocus
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                disabled={cashLoading}
+                placeholder="0.00"
+                slotProps={{
+                  inputLabel: { style: { color: "#9ca3af" } },
+                  htmlInput: { min: "0", step: "any", style: { color: "white", fontWeight: 600 } },
+                  input: {
+                    startAdornment: <InputAdornment position="start" sx={{ "& .MuiTypography-root": { color: "#4caf50", fontWeight: 700 } }}>$</InputAdornment>,
+                  }
+                }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    backgroundColor: "#0b0e11",
+                    "& fieldset": { borderColor: "#2d3748" },
+                    "&:hover fieldset": { borderColor: "#4caf50" },
+                    "&.Mui-focused fieldset": { borderColor: "#4caf50" }
+                  }
+                }}
+              />
+
+              {/* Botonera de Acción */}
+              <Stack direction="row" spacing={2}>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  disabled={cashLoading}
+                  startIcon={<ArrowUpward />}
+                  onClick={() => handleCashAction("DEPOSIT")}
+                  sx={{
+                    bgcolor: "rgba(76, 175, 80, 0.15)",
+                    color: "#4caf50",
+                    fontWeight: 700,
+                    py: 1.5,
+                    textTransform: "none",
+                    borderRadius: 1.5,
+                    "&:hover": { bgcolor: "rgba(76, 175, 80, 0.25)" }
+                  }}
+                >
+                  Ingresar
+                </Button>
+
+                <Button
+                  variant="contained"
+                  fullWidth
+                  disabled={cashLoading}
+                  startIcon={<ArrowDownward />}
+                  onClick={() => handleCashAction("WITHDRAW")}
+                  sx={{
+                    bgcolor: "rgba(244, 67, 54, 0.15)",
+                    color: "#f44336",
+                    fontWeight: 700,
+                    py: 1.5,
+                    textTransform: "none",
+                    borderRadius: 1.5,
+                    "&:hover": { bgcolor: "rgba(244, 67, 54, 0.25)" }
+                  }}
+                >
+                  Retirar
+                </Button>
+              </Stack>
+            </Stack>
+
+          </CardContent>
+        </Card>
+      </Modal>
 
     </Box>
   );
