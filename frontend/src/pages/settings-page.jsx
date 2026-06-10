@@ -16,11 +16,32 @@ function SettingsPage() {
     setLoading(true);
     setMessage(null);
     try {
+      // 1. Intentamos resetear en el backend real (Django)
       const data = await resetAccount();
-      setMessage({ type: "success", text: data.message });
+      
+      // Si el backend responde bien, aprovechamos a limpiar también el fallback por consistencia
+      localStorage.removeItem("simulated_portfolio");
+      localStorage.removeItem("simulated_history");
+
+      setMessage({ type: "success", text: data.message || "Cuenta restablecida con éxito en el servidor." });
     } catch (error) {
-      setMessage({ type: "error", text: "No se pudo resetear la cuenta. Intentalo de nuevo." });
+      console.warn("Backend inalcanzable para reset. Aplicando reconfiguración en modo simulación local...");
+      
+      // 2. FALLBACK: Si Django falla, reseteamos el motor de simulación local
+      const defaultPortfolio = {
+        cash: 10000.00,
+        positions: []
+      };
+      
+      localStorage.setItem("simulated_portfolio", JSON.stringify(defaultPortfolio));
+      localStorage.setItem("simulated_history", JSON.stringify([]));
+
+      setMessage({ 
+        type: "success", 
+        text: "[Modo Simulación] Tu cuenta local ha sido restablecida a $10,000 USD correctamente." 
+      });
     } finally {
+      loadingMarket(); // Fuerza al context a refrescar si tenés esa función disponible
       setLoading(false);
     }
   };

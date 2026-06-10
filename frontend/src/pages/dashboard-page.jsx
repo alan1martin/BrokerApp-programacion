@@ -22,67 +22,41 @@ function DashboardPage() {
           getTransactionHistory()
         ]);
         
-        // 1. Manejo del Historial de Transacciones (Con tus 3 compras de hoy)
-        let finalHistory = [];
+        // Manejo del Historial Real de Django
         if (historyRes && historyRes.length > 0) {
-          finalHistory = historyRes;
+          setHistoryArray(historyRes);
         } else {
           const localHistory = localStorage.getItem("simulated_history");
-          if (localHistory) {
-            finalHistory = JSON.parse(localHistory);
-          } else {
-            finalHistory = [
-              { timestamp: "2026-06-05T11:00:00.000Z", symbol: "NVDA", transaction_type: "BUY", quantity: 1.0, price: 875.00 },
-              { timestamp: "2026-06-05T11:10:00.000Z", symbol: "TSLA", transaction_type: "BUY", quantity: 1.0, price: 180.20 },
-              { timestamp: "2026-06-05T11:15:00.000Z", symbol: "AAPL", transaction_type: "BUY", quantity: 1.0, price: 175.50 }
-            ];
-            localStorage.setItem("simulated_history", JSON.stringify(finalHistory));
-          }
+          setHistoryArray(localHistory ? JSON.parse(localHistory) : []);
         }
-        setHistoryArray(finalHistory);
 
-        // 2. Manejo de las Posiciones (Sumando las 3 al Portfolio)
+        // Manejo de las Posiciones Reales de Django
         if (portfolioRes && portfolioRes.positions && portfolioRes.positions.length > 0) {
           setPortfolioData(portfolioRes);
         } else {
           const localPortfolio = localStorage.getItem("simulated_portfolio");
-          if (localPortfolio) {
-            setPortfolioData(JSON.parse(localPortfolio));
-          } else {
-            const defaultPortfolio = {
-              cash: 5000.00,
-              positions: [
-                { symbol: "NVDA", quantity: 1.0, average_price: 875.00 },
-                { symbol: "TSLA", quantity: 1.0, average_price: 180.20 },
-                { symbol: "AAPL", quantity: 1.0, average_price: 175.50 }
-              ]
-            };
-            localStorage.setItem("simulated_portfolio", JSON.stringify(defaultPortfolio));
-            setPortfolioData(defaultPortfolio);
-          }
+          if (localPortfolio) setPortfolioData(JSON.parse(localPortfolio));
         }
 
       } catch (err) {
         console.warn("Usando simulación completa con NVDA, TSLA y AAPL...");
         
         const localHistory = localStorage.getItem("simulated_history");
-        const finalHistory = localHistory ? JSON.parse(localHistory) : [
+        setHistoryArray(localHistory ? JSON.parse(localHistory) : [
           { timestamp: "2026-06-05T11:00:00.000Z", symbol: "NVDA", transaction_type: "BUY", quantity: 1.0, price: 875.00 },
           { timestamp: "2026-06-05T11:10:00.000Z", symbol: "TSLA", transaction_type: "BUY", quantity: 1.0, price: 180.20 },
           { timestamp: "2026-06-05T11:15:00.000Z", symbol: "AAPL", transaction_type: "BUY", quantity: 1.0, price: 175.50 }
-        ];
-        setHistoryArray(finalHistory);
+        ]);
 
         const localPortfolio = localStorage.getItem("simulated_portfolio");
-        const finalPortfolio = localPortfolio ? JSON.parse(localPortfolio) : {
+        setPortfolioData(localPortfolio ? JSON.parse(localPortfolio) : {
           cash: 5000.00,
           positions: [
             { symbol: "NVDA", quantity: 1.0, average_price: 875.00 },
             { symbol: "TSLA", quantity: 1.0, average_price: 180.20 },
             { symbol: "AAPL", quantity: 1.0, average_price: 175.50 }
           ]
-        };
-        setPortfolioData(finalPortfolio);
+        });
       } finally {
         setLoading(false);
       }
@@ -98,7 +72,6 @@ function DashboardPage() {
     );
   }
 
-  // Cálculos dinámicos combinando los activos del mercado simulado con las posiciones en memoria
   const stocksArray = portfolioData?.positions ?? [];
   const cash = portfolioData?.cash ?? 5000.00;
 
@@ -133,7 +106,7 @@ function DashboardPage() {
     <Stack spacing={4}>
       <Typography variant="h4" fontWeight={600}>Estado de cuenta</Typography>
 
-      {/* FILA 1: Métricas Principales */}
+      {/* FILA 1: Métricas Principales (RESTAURADA A TU DISEÑO ORIGINAL) */}
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 4 }}>
           <Card sx={{ backgroundColor: "#15181e" }}>
@@ -184,7 +157,7 @@ function DashboardPage() {
         </Grid>
       </Grid>
 
-      {/* FILA 2: Gráficos */}
+      {/* FILA 2: Gráficos (RESTAURADA A TU DISEÑO ORIGINAL) */}
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 7 }}>
           <Card sx={{ backgroundColor: "#15181e", p: 2, height: "100%", minHeight: 380 }}>

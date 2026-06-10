@@ -14,17 +14,13 @@ import {
   CircularProgress,
   Alert
 } from "@mui/material";
-import axios from "axios";
+// REEMPLAZO: Importamos tu instancia configurada en lugar de Axios plano
+import api from "../services/api"; 
 
-// Función que le pega a tu endpoint de Django usando el token guardado
+// Función que le pega a tu endpoint usando el baseURL dinámico e interceptores
 const fetchTransactionHistory = async () => {
-  const token = localStorage.getItem("access");
-  
-  const response = await axios.get("http://127.0.0.1:8000/api/portfolio/transactions/", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  // REEMPLAZO: Ahora es dinámico, limpio y seguro para local y producción
+  const response = await api.get("portfolio/transactions/");
   return response.data;
 };
 
@@ -33,10 +29,10 @@ function HistoryPage() {
   const { data: transactions, isLoading, isError, error } = useQuery({
     queryKey: ["transactionHistory"],
     queryFn: fetchTransactionHistory,
-    refetchOnWindowFocus: true, // Se actualiza si cambias de pestaña y volvés
+    refetchOnWindowFocus: true, 
   });
 
-  // Formateador de fechas nativo para dejar la estampa de tiempo pro
+  // Formateador de fechas nativo
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleString("es-AR", {
@@ -92,12 +88,11 @@ function HistoryPage() {
                 transactions.map((tx) => {
                   const totalOrder = (parseFloat(tx.quantity) * parseFloat(tx.price)).toFixed(2);
                   
-                  // Definimos las etiquetas y colores según el tipo exacto que viene de Django
                   let labelType = tx.transaction_type;
                   let chipColor = "#4caf50";
                   let chipBg = "rgba(76, 175, 80, 0.15)";
                   let totalPrefix = "-";
-                  let totalColor = "#ff8a80"; // Pérdida inmediata de cash (al comprar o retirar)
+                  let totalColor = "#ff8a80";
 
                   if (tx.transaction_type === "BUY") {
                     labelType = "COMPRA";
