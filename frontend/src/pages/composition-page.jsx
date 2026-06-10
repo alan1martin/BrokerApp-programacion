@@ -16,11 +16,14 @@ function CompositionPage() {
     refetchOnWindowFocus: true,
   });
 
-  // Query de noticias apuntando al endpoint de Django
+// Query de noticias apuntando de forma dinámica al endpoint de Django
   const { data: newsData, isLoading: newsLoading } = useQuery({
     queryKey: ["portfolioNews"],
     queryFn: async () => {
-      const response = await fetch("http://127.0.0.1:8000/api/portfolio/news/", {
+      // 🌟 Reemplazamos la URL fija por la variable de entorno
+      const API_BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+      
+      const response = await fetch(`${API_BASE}/api/portfolio/news/`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("access")}` }
       });
       if (!response.ok) throw new Error("Error en el servidor de noticias");
