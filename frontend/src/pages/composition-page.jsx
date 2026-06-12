@@ -1,9 +1,8 @@
-// src/pages/composition-page.jsx
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Box, Typography, Paper, Grid, CircularProgress, Alert, Stack, Divider } from "@mui/material";
 import { getAssetComposition } from "../services/portfolio-service";
-import PortfolioPieChart from "../components/dashboard/portfolio-pie-chart"; // 👈 Usamos tu componente original
+import PortfolioPieChart from "../components/dashboard/portfolio-pie-chart";
 import PieChartIcon from "@mui/icons-material/PieChart";
 import NewspaperIcon from "@mui/icons-material/Newspaper";
 
@@ -16,14 +15,14 @@ function CompositionPage() {
     refetchOnWindowFocus: true,
   });
 
-// Query de noticias apuntando de forma dinámica al endpoint de Django
   const { data: newsData, isLoading: newsLoading } = useQuery({
     queryKey: ["portfolioNews"],
     queryFn: async () => {
-      // 🌟 Reemplazamos la URL fija por la variable de entorno
+      // Usamos la URL base. Si tu .env tiene /api al final, quita el /api de abajo
       const API_BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
       
-      const response = await fetch(`${API_BASE}/api/portfolio/news/`, {
+      // Corregido: Ajusta según si tu BASE incluye o no el /api
+      const response = await fetch(`${API_BASE}/portfolio/news/`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("access")}` }
       });
       if (!response.ok) throw new Error("Error en el servidor de noticias");
@@ -32,7 +31,6 @@ function CompositionPage() {
     retry: true,
   });
 
-  // Mapeamos los datos de la API al mismo formato exacto que usa tu PortfolioPieChart
   const chartData = useMemo(() => {
     if (!data?.assets) return [];
     
@@ -40,14 +38,12 @@ function CompositionPage() {
       id: asset.name,
       label: asset.name,
       value: parseFloat(asset.value.toFixed(2)),
-      // Respetamos la paleta de colores del Dashboard original
       color: asset.name === "CASH" ? "#4caf50" : COLORS[index % COLORS.length]
     }));
   }, [data]);
 
   return (
     <Box sx={{ p: 4, bgcolor: "#0b0e11", minHeight: "100vh", color: "white" }}>
-      {/* CABECERA */}
       <Box sx={{ mb: 4 }}>
         <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1 }}>
           <PieChartIcon sx={{ color: "#9c27b0", fontSize: 28 }} />
@@ -74,8 +70,6 @@ function CompositionPage() {
 
       {!isLoading && !isError && data && (
         <Grid container spacing={4}>
-          
-          {/* ================= SECCIÓN SUPERIOR: DISEÑO HORIZONTAL ESTIRADO ================= */}
           <Grid item xs={12}>
             <Paper 
               sx={{ 
@@ -89,14 +83,12 @@ function CompositionPage() {
                 gap: 4
               }}
             >
-              {/* Gráfico Original Identificado al Dashboard */}
               <Box sx={{ width: "100%", maxWidth: 380, display: "flex", justifyContent: "center" }}>
                 {chartData.length > 0 && <PortfolioPieChart data={chartData} />}
               </Box>
 
               <Divider orientation="vertical" flexItem sx={{ borderColor: "#1c2025", display: { xs: "none", lg: "block" } }} />
 
-              {/* Lista Detallada Horizontal (Líneas de Activos) */}
               <Box sx={{ flexGrow: 1, width: "100%" }}>
                 <Typography variant="subtitle1" fontWeight={700} color="white" sx={{ mb: 2 }}>
                   Distribución Patrimonial Detallada
@@ -118,16 +110,25 @@ function CompositionPage() {
                             <Stack>
                               <Typography variant="body2" fontWeight={700} color="white">{asset.name}</Typography>
                               <Typography variant="caption" color="gray">
-                                {asset.name === "CASH" ? "Efectivo disponible" : "Posición en cuenta "}
+                                {asset.name === "CASH" ? "Efectivo disponible" : "Posición en cuenta"}
                               </Typography>
                             </Stack>
                           </Stack>
 
+                          {/* Sección corregida para evitar que el % se pegue */}
                           <Stack alignItems="flex-end">
                             <Typography variant="body2" fontWeight={700}>
                               ${asset.value.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
                             </Typography>
-                            <Typography variant="caption" sx={{ color: itemColor, fontWeight: 700 }}>
+                            <Typography 
+                              variant="caption" 
+                              sx={{ 
+                                color: itemColor, 
+                                fontWeight: 700, 
+                                mt: 0.5, // Margen superior para separación
+                                display: 'block' 
+                              }}
+                            >
                               {asset.percentage}%
                             </Typography>
                           </Stack>
@@ -140,7 +141,7 @@ function CompositionPage() {
             </Paper>
           </Grid>
 
-          {/* ================= SECCIÓN INFERIOR: SECCIÓN AMARILLA DE NOTICIAS ================= */}
+          {/* Sección de noticias */}
           <Grid item xs={12}>
             <Box sx={{ mt: 2 }}>
               <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2 }}>
@@ -185,13 +186,12 @@ function CompositionPage() {
                   </Grid>
                 ) : (
                   <Typography variant="body2" color="gray" textAlign="center" sx={{ py: 2 }}>
-                    No se pudieron cargar noticias en este momento. Volvé a intentar en unos minutos.
+                    No se pudieron cargar noticias en este momento.
                   </Typography>
                 )}
               </Paper>
             </Box>
           </Grid>
-
         </Grid>
       )}
     </Box>

@@ -1,4 +1,4 @@
-
+//frontend/src/hooks/use-market-data.js
 import { useQuery } from "@tanstack/react-query";
 
 import {

@@ -1,0 +1,7 @@
+Django>=5.0.0
+djangorestframework
+django-cors-headers
+yfinance
+pandas
+numpy
+gunicorn

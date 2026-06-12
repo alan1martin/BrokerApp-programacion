@@ -7,9 +7,9 @@ import {
   Modal, Card, CardContent, TextField, InputAdornment, Button, Alert
 } from "@mui/material";
 import { 
-  TrendingUp as LogoIcon, 
+  QueryStats as LogoIcon, // <-- Usamos un ícono real de MUI mapeado como LogoIcon
   Logout, 
-  BarChart, 
+  BarChart as ChartIcon, // Alias para evitar colisiones globales
   AccountBalanceWallet, 
   SwapHoriz, 
   Settings,
@@ -31,7 +31,7 @@ function DashboardLayout() {
   const [openTrading, setOpenTrading] = useState(false);
   const [openPortfolio, setOpenPortfolio] = useState(false);
 
-  // NUEVOS ESTADOS PARA OPERAR FONDOS (FASE 2)
+  // ESTADOS PARA OPERAR FONDOS
   const [openCashModal, setOpenCashModal] = useState(false);
   const [amount, setAmount] = useState("");
   const [cashLoading, setCashLoading] = useState(false);
@@ -57,7 +57,6 @@ function DashboardLayout() {
       setMessage({ type: "success", text: data.message });
       setAmount(""); // Reseteamos el input
       
-      // Opcional: Recargar la ventana a los 1.5s para forzar refresco de saldos en Dashboard/Portfolio
       setTimeout(() => {
         window.location.reload();
       }, 1500);
@@ -156,20 +155,22 @@ function DashboardLayout() {
                 <ListItemText primary="Estado de Cuenta" slotProps={{ primary: { fontSize: "0.85rem" } }} />
               </ListItemButton>
               
-              <ListItemButton sx={{ py: 0.6 }}>
-                <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "gray" }} />
+              {/* BOTÓN RENDIMIENTO E INFORMES */}
+              <ListItemButton onClick={() => navigate("/reports")} sx={{ py: 0.6 }}>
+                <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#4caf50" }} />
                 <ListItemText primary="Rendimiento e Informes" slotProps={{ primary: { fontSize: "0.85rem" } }} />
               </ListItemButton>
 
-              <ListItemButton sx={{ py: 0.6 }}>
-                <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "gray" }} />
-                <ListItemText primary="Perfil de Inversor" slotProps={{ primary: { fontSize: "0.85rem" } }} />
+              {/* Perfil de Inversor */}
+              <ListItemButton onClick={() => navigate("/investor-profile")} sx={{ py: 0.6 }}>
+                <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#4caf50" }} />
+                <ListItemText primary="Perfil de Inversor" slotProps={{ primary: { fontSize: "0.85rem", color: "white", fontWeight: 600 } }} />
               </ListItemButton>
 
-              {/* BOTÓN CONFIGURADO: Levanta el modal flotante */}
+              {/* Ingresar / Retirar Dinero */}
               <ListItemButton onClick={() => setOpenCashModal(true)} sx={{ py: 0.6 }}>
                 <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#4caf50" }} />
-                <ListItemText primary="Ingresar / Retirar Dinero" slotProps={{ primary: { fontSize: "0.85rem", color: "white", fontWeight: 600 } }} />
+                <ListItemText primary="Ingresar / Retirar Dinero" slotProps={{ primary: { fontSize: "0.85rem" } }} />
               </ListItemButton>
             </List>
           </Collapse>
@@ -177,7 +178,7 @@ function DashboardLayout() {
           {/* 2. MARKETS */}
           <ListItemButton onClick={() => setOpenMarkets(!openMarkets)}>
             <ListItemIcon sx={iconContainerStyle("rgba(33, 150, 243, 0.15)")}>
-              <BarChart sx={{ color: "#2196f3", fontSize: 18 }} />
+              <ChartIcon sx={{ color: "#2196f3", fontSize: 18 }} />
             </ListItemIcon>
             <ListItemText primary="Markets" slotProps={{ primary: { fontSize: "0.9rem", fontWeight: 600 } }} />
             {openMarkets ? <ExpandLess sx={{ fontSize: 18 }} /> : <ExpandMore sx={{ fontSize: 18 }} />}
@@ -186,7 +187,7 @@ function DashboardLayout() {
           <Collapse in={openMarkets} timeout="auto" unmountOnExit>
             <List component="div" disablePadding sx={{ pl: 3.5 }}>
               <ListItemButton onClick={() => navigate("/markets")} sx={{ py: 0.6 }}>
-                <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: openMarkets ? "#2196f3" : "gray" }} />
+                <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#2196f3" }} />
                 <ListItemText primary="Panel de Cotizaciones" slotProps={{ primary: { fontSize: "0.85rem" } }} />
               </ListItemButton>
               <ListItemButton sx={{ py: 0.6 }}>
@@ -200,34 +201,32 @@ function DashboardLayout() {
             </List>
           </Collapse>
 
-          {/* 3. PORTFOLIO (Desplegable Ampliado) */}
-            <ListItemButton onClick={() => setOpenPortfolio(!openPortfolio)}>
-              <ListItemIcon sx={iconContainerStyle("rgba(156, 39, 176, 0.15)")}>
-                <AccountBalanceWallet sx={{ color: "#9c27b0", fontSize: 18 }} />
-              </ListItemIcon>
-              <ListItemText primary="Portfolio" slotProps={{ primary: { fontSize: "0.9rem", fontWeight: 600 } }} />
-              {openPortfolio ? <ExpandLess sx={{ fontSize: 18 }} /> : <ExpandMore sx={{ fontSize: 18 }} />}
-            </ListItemButton>
+          {/* 3. PORTFOLIO */}
+          <ListItemButton onClick={() => setOpenPortfolio(!openPortfolio)}>
+            <ListItemIcon sx={iconContainerStyle("rgba(156, 39, 176, 0.15)")}>
+              <AccountBalanceWallet sx={{ color: "#9c27b0", fontSize: 18 }} />
+            </ListItemIcon>
+            <ListItemText primary="Portfolio" slotProps={{ primary: { fontSize: "0.9rem", fontWeight: 600 } }} />
+            {openPortfolio ? <ExpandLess sx={{ fontSize: 18 }} /> : <ExpandMore sx={{ fontSize: 18 }} />}
+          </ListItemButton>
 
-            <Collapse in={openPortfolio} timeout="auto" unmountOnExit>
-              <List component="div" disablePadding sx={{ pl: 3.5 }}>
-                
-                {/* BOTÓN CONFIGURADO: Ahora viaja correctamente a /composition */}
-                <ListItemButton onClick={() => navigate("/composition")} sx={{ py: 0.6 }}>
-                  <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#9c27b0" }} />
-                  <ListItemText primary="Composición de Activos" slotProps={{ primary: { fontSize: "0.85rem", color: "white", fontWeight: 600 } }} />
-                </ListItemButton>
-                
-                <ListItemButton onClick={() => navigate("/history")} sx={{ py: 0.6 }}>
-                  <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "gray" }} />
-                  <ListItemText primary="Historial de Órdenes" slotProps={{ primary: { fontSize: "0.85rem" } }} />
-                </ListItemButton>
-                <ListItemButton sx={{ py: 0.6 }}>
-                  <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "gray" }} />
-                  <ListItemText primary="Dividendos Cobrados" slotProps={{ primary: { fontSize: "0.85rem" } }} />
-                </ListItemButton>
-              </List>
-            </Collapse>
+          <Collapse in={openPortfolio} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding sx={{ pl: 3.5 }}>
+              <ListItemButton onClick={() => navigate("/composition")} sx={{ py: 0.6 }}>
+                <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#9c27b0" }} />
+                <ListItemText primary="Composición de Activos" slotProps={{ primary: { fontSize: "0.85rem", color: "white", fontWeight: 600 } }} />
+              </ListItemButton>
+              
+              <ListItemButton onClick={() => navigate("/history")} sx={{ py: 0.6 }}>
+                <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "gray" }} />
+                <ListItemText primary="Historial de Órdenes" slotProps={{ primary: { fontSize: "0.85rem" } }} />
+              </ListItemButton>
+              <ListItemButton sx={{ py: 0.6 }}>
+                <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "gray" }} />
+                <ListItemText primary="Dividendos Cobrados" slotProps={{ primary: { fontSize: "0.85rem" } }} />
+              </ListItemButton>
+            </List>
+          </Collapse>
 
           {/* 4. TRADING */}
           <ListItemButton onClick={() => setOpenTrading(!openTrading)}>
@@ -241,7 +240,7 @@ function DashboardLayout() {
           <Collapse in={openTrading} timeout="auto" unmountOnExit>
             <List component="div" disablePadding sx={{ pl: 3.5 }}>
               <ListItemButton onClick={() => navigate("/trading")} sx={{ py: 0.6 }}>
-                <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: openTrading ? "#ff9800" : "gray" }} />
+                <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#ff9800" }} />
                 <ListItemText primary="Operar Acciones / CEDEARs" slotProps={{ primary: { fontSize: "0.85rem" } }} />
               </ListItemButton>
               <ListItemButton sx={{ py: 0.6 }}>
@@ -280,7 +279,7 @@ function DashboardLayout() {
         <Outlet />
       </Box>
 
-      {/* ================= MODAL FLOTANTE: GESTIÓN DE EFECTIVO (FASE 2) ================= */}
+      {/* ================= MODAL FLOTANTE: GESTIÓN DE EFECTIVO ================= */}
       <Modal
         open={openCashModal}
         onClose={handleCloseModal}
@@ -289,8 +288,6 @@ function DashboardLayout() {
       >
         <Card sx={{ backgroundColor: "#15181e", borderRadius: 3, border: "1px solid #1c2025", maxWidth: 450, width: "100%", boxShadow: 24 }}>
           <CardContent sx={{ p: 4 }}>
-            
-            {/* Cabecera del Modal */}
             <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
               <Typography variant="h6" fontWeight={800} color="white">
                 Movimiento de Fondos
@@ -304,7 +301,6 @@ function DashboardLayout() {
               Ingresá el monto para inyectar o retirar efectivo del saldo disponible de tu cuenta.
             </Typography>
 
-            {/* Alertas Internas */}
             {message && (
               <Alert 
                 severity={message.type} 
@@ -320,7 +316,6 @@ function DashboardLayout() {
               </Alert>
             )}
 
-            {/* Input de Monto */}
             <Stack spacing={3}>
               <TextField
                 label="Monto a transaccionar"
@@ -349,7 +344,6 @@ function DashboardLayout() {
                 }}
               />
 
-              {/* Botonera de Acción */}
               <Stack direction="row" spacing={2}>
                 <Button
                   variant="contained"
@@ -377,7 +371,7 @@ function DashboardLayout() {
                   startIcon={<ArrowDownward />}
                   onClick={() => handleCashAction("WITHDRAW")}
                   sx={{
-                    bgcolor: "rgba(244, 67, 54, 0.15)",
+                    bgcolor: "rgba(244, 67, 64, 0.15)",
                     color: "#f44336",
                     fontWeight: 700,
                     py: 1.5,

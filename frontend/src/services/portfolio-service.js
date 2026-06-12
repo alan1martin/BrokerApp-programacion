@@ -103,3 +103,17 @@ export const getMarketQuotes = async () => {
     throw error;
   }
 };
+
+/**
+ * 8. OBTENER RENDIMIENTO POR ACTIVO (Para la pantalla de Informes)
+ * /api/portfolio/performance/
+ */
+export const getAssetPerformance = async () => {
+  try {
+    const response = await api.get("portfolio/performance/");
+    return response.data;
+  } catch (error) {
+    console.error("Error en getAssetPerformance service:", error.response?.data || error.message);
+    throw error;
+  }
+};

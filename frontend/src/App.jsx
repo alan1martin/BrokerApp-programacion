@@ -14,6 +14,8 @@ import SettingsPage from "./pages/settings-page";
 import LoginPage from "./pages/login-page";
 import TradingPage from "./pages/trading-page"; 
 import HistoryPage from "./pages/history-page";
+import InvestorProfilePage from "./pages/investor-profile-page"; 
+import Reports from "./pages/reports"; // Importación de la página de informes
 
 function App() {
   return (
@@ -47,8 +49,8 @@ function App() {
           />
 
           {/* Ruta de Portfolio
-            Mapeamos 'portfolio' a CompositionPage para que cuando hagas clic en 
-            "Portfolio" en tu Sidebar viejo, levante también el gráfico sin romperse.
+              Mapeamos 'portfolio' a CompositionPage para que cuando hagas clic en 
+              "Portfolio" en tu Sidebar viejo, levante también el gráfico sin romperse.
           */}
           <Route
             path="portfolio"
@@ -61,20 +63,34 @@ function App() {
             element={<TradingPage />}
           />
 
-          {/* Panel de Cotizaciones (Fase 4) 📈 */}
+          {/* Panel de Cotizaciones (Fase 4) */}
           <Route
             path="markets"
             element={<MarketsPage />}
           />
 
+          {/* Zona de configuración */}
           <Route
             path="settings"
             element={<SettingsPage />}
           />
           
+          {/* Historial de transacciones */}
           <Route
             path="history"
             element={<HistoryPage />}
+          />
+
+          {/* Perfil de Inversor (Test CNV) */}
+          <Route
+            path="investor-profile"
+            element={<InvestorProfilePage />}
+          />
+
+          {/* NUEVA RUTA: Rendimiento e Informes */}
+          <Route
+            path="reports"
+            element={<Reports />}
           />
         </Route>
       </Routes>

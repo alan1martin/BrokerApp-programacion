@@ -1,37 +1,37 @@
 # ======================
-# Frontend (React / Node)
+# Frontend
 # ======================
 node_modules/
 dist/
 build/
 coverage/
-
 .env
 .env.local
+.env.development
+.env.production
 *.log
 
 # ======================
-# Backend (Django / Python)
+# Backend
 # ======================
 __pycache__/
 *.py[cod]
 .venv/
 venv/
-
-*.sqlite3
+db.sqlite3
 media/
 staticfiles/
+.env
 
 # ======================
-# General
+# General / IDE
 # ======================
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
-
-
-node_modules/
-.venv/
-__pycache__/
-db.sqlite3
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

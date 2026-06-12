@@ -30,8 +30,10 @@ class Position(models.Model):
 # --- 3. MODELO TRANSACTION ---
 class Transaction(models.Model):
     TRANSACTION_TYPES = [
-        ('BUY', 'Compra'),
-        ('SELL', 'Venta'),
+    ('BUY', 'Compra'),
+    ('SELL', 'Venta'),
+    ('DEP', 'Depósito'),
+    ('WIT', 'Retiro'),
     ]
 
     portfolio = models.ForeignKey(Portfolio, on_delete=models.CASCADE, related_name="transactions")
@@ -43,3 +45,4 @@ class Transaction(models.Model):
 
     def __str__(self):
         return f"{self.transaction_type} {self.quantity} {self.symbol} a ${self.price} ({self.portfolio.user.username})"
+    
