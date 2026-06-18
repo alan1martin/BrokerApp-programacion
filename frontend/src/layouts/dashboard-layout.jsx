@@ -1,29 +1,42 @@
-// src/layouts/dashboard-layout.jsx
 import { useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { 
   Box, AppBar, Toolbar, Typography, Avatar, IconButton, Stack,
   List, ListItemButton, ListItemIcon, ListItemText, Collapse,
-  Modal, Card, CardContent, TextField, InputAdornment, Button, Alert
+  Modal, Card, CardContent, TextField, InputAdornment, Button, Alert,
+  Menu, MenuItem, Divider, Switch
 } from "@mui/material";
-import { 
-  QueryStats as LogoIcon, // <-- Usamos un ícono real de MUI mapeado como LogoIcon
-  Logout, 
-  BarChart as ChartIcon, // Alias para evitar colisiones globales
-  AccountBalanceWallet, 
-  SwapHoriz, 
-  Settings,
-  ExpandLess,
-  ExpandMore,
-  FiberManualRecord,
-  Close as CloseIcon,
-  ArrowUpward,
-  ArrowDownward
-} from "@mui/icons-material";
+
+// Importaciones directas para evitar el SyntaxError de Vite
+import LogoIcon from "@mui/icons-material/QueryStats";
+import Logout from "@mui/icons-material/Logout";
+import ChartIcon from "@mui/icons-material/BarChart";
+import AccountBalanceWallet from "@mui/icons-material/AccountBalanceWallet";
+import SwapHoriz from "@mui/icons-material/SwapHoriz";
+import Settings from "@mui/icons-material/Settings";
+import ExpandLess from "@mui/icons-material/ExpandLess";
+import ExpandMore from "@mui/icons-material/ExpandMore";
+import FiberManualRecord from "@mui/icons-material/FiberManualRecord";
+import CloseIcon from "@mui/icons-material/Close";
+import ArrowUpward from "@mui/icons-material/ArrowUpward";
+import ArrowDownward from "@mui/icons-material/ArrowDownward";
+import AccountCircle from "@mui/icons-material/AccountCircle";
+import AccountBox from "@mui/icons-material/AccountBox";
+import Shield from "@mui/icons-material/Shield";
+import Help from "@mui/icons-material/Help"; // <-- Cambiado aca para que Vite no joda
+import Language from "@mui/icons-material/Language";
+import DarkMode from "@mui/icons-material/DarkMode";
+
 import { manageCashFunds } from "../services/portfolio-service";
 
 function DashboardLayout() {
   const navigate = useNavigate();
+  
+  // Estado para el menú flotante del perfil
+  const [anchorEl, setAnchorEl] = useState(null);
+  
+  // Estado local para el Switch de Modo Oscuro (por defecto activo)
+  const [isDarkMode, setIsDarkMode] = useState(true);
   
   // Estados para controlar qué menú está desplegado (Dropdowns)
   const [openAccount, setOpenAccount] = useState(false);
@@ -41,6 +54,10 @@ function DashboardLayout() {
     localStorage.removeItem("access");
     navigate("/login");
   };
+
+  // Handlers para el menú del perfil
+  const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
 
   // Handler para depósitos y retiros
   const handleCashAction = async (actionType) => {
@@ -111,16 +128,96 @@ function DashboardLayout() {
             </Typography>
           </Stack>
 
-          <Stack direction="row" alignItems="center" spacing={2}>
-            <Typography variant="body2" fontWeight={600} sx={{ color: "#9ca3af" }}>
-              Martín
-            </Typography>
-            <Avatar sx={{ width: 32, height: 32, bgcolor: "#1c2025", border: "1px solid #2d3748", fontSize: "0.9rem", fontWeight: 600, color: "white" }}>
-              M
-            </Avatar>
-            <IconButton onClick={handleLogout} sx={{ color: "#9ca3af", "&:hover": { color: "#f44336" } }}>
-              <Logout fontSize="small" />
-            </IconButton>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Stack 
+              direction="row" 
+              alignItems="center" 
+              spacing={1.5} 
+              onClick={handleMenuOpen} 
+              sx={{ cursor: 'pointer', p: 0.8, borderRadius: 2, '&:hover': { bgcolor: '#1c2025' } }}
+            >
+              <Typography variant="body2" fontWeight={600} sx={{ color: "#9ca3af" }}>
+                Martín
+              </Typography>
+              <Avatar sx={{ width: 32, height: 32, bgcolor: "#1c2025", border: "1px solid #2d3748", color: "#9ca3af" }}>
+                <AccountCircle sx={{ fontSize: 28 }} />
+              </Avatar>
+            </Stack>
+
+            {/* MENÚ DESPLEGABLE DEL PERFIL CONFIGURADO */}
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleMenuClose}
+              disableScrollLock
+              PaperProps={{
+                sx: { 
+                  bgcolor: "#15181e", 
+                  color: "white", 
+                  border: "1px solid #1c2025", 
+                  mt: 1.5,
+                  minWidth: 220,
+                  boxShadow: "0px 8px 24px rgba(0,0,0,0.5)",
+                  "& .MuiMenuItem-root": {
+                    fontSize: "0.88rem",
+                    py: 1.2,
+                    color: "#9ca3af",
+                    "&:hover": { bgcolor: "#1c2025", color: "white" }
+                  }
+                }
+              }}
+            >
+              <MenuItem onClick={() => { handleMenuClose(); navigate("/investor-profile"); }}>
+                <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}><AccountBox sx={{ fontSize: 20 }} /></ListItemIcon>
+                Mi Perfil
+              </MenuItem>
+              
+              <MenuItem onClick={() => { handleMenuClose(); navigate("/security"); }}>
+                <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}><Shield sx={{ fontSize: 20 }} /></ListItemIcon>
+                Seguridad
+              </MenuItem>
+
+              <MenuItem onClick={() => { handleMenuClose(); navigate("/settings"); }}>
+                <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}><Settings sx={{ fontSize: 20 }} /></ListItemIcon>
+                Configuración
+              </MenuItem>
+
+                {/* Dejalo configurado así: */}
+              <MenuItem onClick={() => { handleMenuClose(); navigate("/help"); }}>
+                <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}><Help sx={{ fontSize: 20 }} /></ListItemIcon>
+                Centro de Ayuda
+              </MenuItem>
+
+              <MenuItem onClick={() => { handleMenuClose(); navigate("/language"); }}>
+                <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}><Language sx={{ fontSize: 20 }} /></ListItemIcon>
+                Idioma
+              </MenuItem>
+
+              <Divider sx={{ bgcolor: "#1c2025", my: "4px !important" }} />
+
+              <MenuItem disableRipple sx={{ "&:hover": { bgcolor: "transparent !important", color: "#9ca3af !important" }, display: "flex", justifyContent: "space-between", width: "100%" }}>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}><DarkMode sx={{ fontSize: 20 }} /></ListItemIcon>
+                  Modo Oscuro
+                </Box>
+                <Switch 
+                  size="small" 
+                  checked={isDarkMode} 
+                  onChange={(e) => setIsDarkMode(e.target.checked)}
+                  sx={{
+                    "& .MuiSwitch-switchBase.Mui-checked": { color: "#4caf50" },
+                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { backgroundColor: "#4caf50" }
+                  }}
+                />
+              </MenuItem>
+
+              <Divider sx={{ bgcolor: "#1c2025", my: "4px !important" }} />
+
+              <MenuItem onClick={() => { handleMenuClose(); handleLogout(); }} sx={{ "&:hover": { color: "#f44336 !important", bgcolor: "rgba(244, 67, 54, 0.08) !important" } }}>
+                <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}><Logout sx={{ fontSize: 20, color: "inherit" }} /></ListItemIcon>
+                Cerrar Sesión
+              </MenuItem>
+            </Menu>
           </Stack>
         </Toolbar>
       </AppBar>

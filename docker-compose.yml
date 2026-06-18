@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  # ================= SERVICIO DEL BACKEND (DJANGO) =================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: broker_backend
+    volumes:
+      - ./backend:/app
+    env_file:         
+      - ./backend/.env  
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=1 # Podés cambiarlo a 0 en producción real si manejan variables de entorno
+    networks:
+      - broker_network
+
+  # ================= SERVICIO DEL FRONTEND (REACT + VITE + NGINX) =================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: broker_frontend
+    ports:
+      - "80:80" # Tu profesor entrará por http://localhost (puerto 80 por defecto)
+    depends_on:
+      - backend
+    networks:
+      - broker_network
+
+# Definición de la red interna para que se comuniquen entre contenedores
+networks:
+  broker_network:
+    driver: bridge

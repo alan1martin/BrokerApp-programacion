@@ -1,5 +1,7 @@
-//frontend/src/context/market-context.js
+//frontend/src/context/market-context.jsx
 import { createContext, useContext, useState, useEffect } from "react";
+// Importamos la instancia configurada que ya tiene el prefijo /api y los interceptores de token
+import api from "../services/api"; 
 
 const MarketContext = createContext();
 
@@ -35,11 +37,6 @@ export function MarketProvider({ children }) {
 
   const fetchRealPrices = async () => {
     const token = localStorage.getItem("access");
-    const isDevelopment = import.meta.env.MODE === "development";
-    
-    const BASE_API = isDevelopment 
-      ? "http://localhost:8000/api" 
-      : "https://api.app4.academia.ar/api";
 
     if (!token || token === "token_falso_de_prueba_123") {
       setAssets(INITIAL_ASSETS);
@@ -64,16 +61,12 @@ export function MarketProvider({ children }) {
         }
 
         try {
-          const response = await fetch(`${BASE_API}/portfolio/history/${symbol}/`, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`
-            }
-          });
+          // Reemplazamos el fetch manual y propenso a CORS por nuestra instancia de Axios.
+          // Como 'api' ya apunta a http://localhost:8000/api e inyecta los headers, solo definimos el endpoint relativo.
+          const response = await api.get(`/portfolio/history/${symbol}/`);
 
-          if (response.ok) {
-            const data = await response.json();
+          if (response.status === 200) {
+            const data = response.data;
             return {
               symbol: symbol,
               currentPrice: data.currentPrice || data.price,
@@ -81,11 +74,12 @@ export function MarketProvider({ children }) {
             };
           }
           
-          if (response.status === 401) {
-            console.warn(`Django rechazó la autenticación (401) para el activo: ${symbol}. Usando simulación.`);
-          }
         } catch (e) {
-          console.error(`No se pudo obtener precio real de ${symbol} desde Django:`, e);
+          if (e.response && e.response.status === 401) {
+            console.warn(`Django rechazó la autenticación (401) para el activo: ${symbol}. Usando simulación.`);
+          } else {
+            console.error(`No se pudo obtener precio real de ${symbol} desde Django:`, e);
+          }
         }
         return null;
       });
