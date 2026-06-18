@@ -1,4 +1,4 @@
-
+// src/pages/market-page.jsx
 import { 
   Typography, 
   Stack, 

@@ -11,7 +11,7 @@ import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ReplayIcon from "@mui/icons-material/Replay";
 
-// 1. Base de datos de preguntas y puntajes (Simil CNV Argentina)
+// 1. Base de datos de preguntas y puntajes (Simil CNV Argentina - 10 Preguntas)
 const QUESTIONS = [
   {
     id: 1,
@@ -47,6 +47,60 @@ const QUESTIONS = [
       { text: "Plazos fijos y Fondos Comunes de Inversión de Mercado de Dinero.", score: 1 },
       { text: "Bonos soberanos (como el AL30) u Obligaciones Negociables corporativas.", score: 2 },
       { text: "Cedears (Apple, Tesla, Nvidia), Acciones o Criptoactivos.", score: 3 }
+    ]
+  },
+  {
+    id: 5,
+    question: "¿Qué porcentaje de tus ingresos mensuales o ahorros totales estás destinando a invertirse?",
+    options: [
+      { text: "Menos del 10% (Una parte muy pequeña para probar).", score: 1 },
+      { text: "Entre el 10% y el 30% (Un ahorro planificado y recurrente).", score: 2 },
+      { text: "Más del 30% (Invierto de forma agresiva la mayor parte de mi excedente).", score: 3 }
+    ]
+  },
+  {
+    id: 6,
+    question: "¿Cuál es tu situación respecto a tus conocimientos sobre el mercado de capitales?",
+    options: [
+      { text: "Nulos o muy básicos. Prefiero que la app o expertos me guíen.", score: 1 },
+      { text: "Intermedios. Entiendo la relación riesgo-retorno y sigo algunas noticias.", score: 2 },
+      { text: "Avanzados. Entiendo análisis técnico/fundamental y opero con frecuencia.", score: 3 }
+    ]
+  },
+  {
+    id: 7,
+    question: "Con respecto a tus fuentes de ingresos principales, ¿Cómo las describirías?",
+    options: [
+      { text: "Estables y predecibles (Sueldo fijo, jubilación, rentas seguras).", score: 1 },
+      { text: "Estables pero variables (Comisiones, profesional independiente con flujo constante).", score: 2 },
+      { text: "Inestables o estacionales (Emprendedor, ingresos muy variables mes a mes).", score: 3 }
+    ]
+  },
+  {
+    id: 8,
+    question: "Si tuvieras que elegir entre estas tres alternativas de inversión ideal, ¿cuál preferirías?",
+    options: [
+      { text: "Rendimiento bajo pero 100% garantizado (saber exactamente cuánto gano).", score: 1 },
+      { text: "Rendimiento que supere a la inflación con fluctuaciones leves de valor.", score: 2 },
+      { text: "Potencial de ganancias muy altas sabiendo que puedo perder parte del capital.", score: 3 }
+    ]
+  },
+  {
+    id: 9,
+    question: "Si una inversión que realizaste no genera ganancias durante los primeros 6 meses, ¿qué decisión tomás?",
+    options: [
+      { text: "La liquido inmediatamente; si no da ganancias rápido, no me sirve.", score: 1 },
+      { text: "Espero un poco más (hasta cumplir el año) para evaluar el comportamiento.", score: 2 },
+      { text: "No me preocupa, sé que las mejores inversiones maduran a largo plazo.", score: 3 }
+    ]
+  },
+  {
+    id: 10,
+    question: "¿Has operado anteriormente en plataformas de inversión o brokers de bolsa?",
+    options: [
+      { text: "No, nunca. Es mi primera experiencia invirtiendo fuera del banco tradicional.", score: 1 },
+      { text: "Sí, operé ocasionalmente plazos fijos web o compré dólares/moneda extranjera.", score: 2 },
+      { text: "Sí, opero o he operado activamente acciones, bonos, Cedears o cripto.", score: 3 }
     ]
   }
 ];
@@ -106,11 +160,11 @@ function InvestorProfilePage() {
       setCurrentQuestionIndex((prev) => prev + 1);
       setSelectedAnswer(null);
     } else {
-      // Calcular perfil final basado en el rango de puntos
-      // Puntos posibles: 4 (mínimo) a 12 (máximo)
+      // Calcular perfil final basado en el rango de puntos para 10 preguntas
+      // Puntos posibles: 10 (mínimo) a 30 (máximo)
       let profileKey = "moderado";
-      if (newScore <= 6) profileKey = "conservador";
-      else if (newScore >= 10) profileKey = "agresivo";
+      if (newScore <= 16) profileKey = "conservador";
+      else if (newScore >= 24) profileKey = "agresivo";
 
       setFinalProfile(PROFILES[profileKey]);
       
@@ -120,7 +174,7 @@ function InvestorProfilePage() {
     }
   };
 
-  const progressPercentage = ((currentQuestionIndex) / QUESTIONS.length) * 100;
+  const progressPercentage = (currentQuestionIndex / QUESTIONS.length) * 100;
 
   return (
     <Stack spacing={4} sx={{ maxWidth: 700, margin: "0 auto", width: "100%" }}>
@@ -143,7 +197,7 @@ function InvestorProfilePage() {
               ¿Qué tipo de inversor sos?
             </Typography>
             <Typography color="gray" variant="body1" sx={{ mb: 4, maxWidth: 500, mx: "auto" }}>
-              Antes de armar tu cartera de Cedears o bonos, es fundamental saber cómo reaccionás ante los movimientos del mercado. Este test te tomará menos de 2 minutos.
+              Antes de armar tu cartera de Cedears o bonos, es fundamental saber cómo reaccionás ante los movimientos del mercado. Este test te tomará menos de 3 minutos.
             </Typography>
             <Button
               variant="contained"

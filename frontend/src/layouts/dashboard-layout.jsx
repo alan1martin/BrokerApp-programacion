@@ -1,4 +1,5 @@
-import { useState } from "react";
+// src/layouts/dashboard-layout.jsx
+import { useState, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { 
   Box, AppBar, Toolbar, Typography, Avatar, IconButton, Stack,
@@ -23,8 +24,7 @@ import ArrowDownward from "@mui/icons-material/ArrowDownward";
 import AccountCircle from "@mui/icons-material/AccountCircle";
 import AccountBox from "@mui/icons-material/AccountBox";
 import Shield from "@mui/icons-material/Shield";
-import Help from "@mui/icons-material/Help"; // <-- Cambiado aca para que Vite no joda
-import Language from "@mui/icons-material/Language";
+import Help from "@mui/icons-material/Help"; 
 import DarkMode from "@mui/icons-material/DarkMode";
 
 import { manageCashFunds } from "../services/portfolio-service";
@@ -35,8 +35,8 @@ function DashboardLayout() {
   // Estado para el menú flotante del perfil
   const [anchorEl, setAnchorEl] = useState(null);
   
-  // Estado local para el Switch de Modo Oscuro (por defecto activo)
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  // Estado local para el Switch de Modo Oscuro sincronizado con localStorage
+  const [isDarkMode, setIsDarkMode] = useState(localStorage.getItem("theme") !== "light");
   
   // Estados para controlar qué menú está desplegado (Dropdowns)
   const [openAccount, setOpenAccount] = useState(false);
@@ -50,6 +50,17 @@ function DashboardLayout() {
   const [cashLoading, setCashLoading] = useState(false);
   const [message, setMessage] = useState(null);
 
+  // Sincronizar el estado del switch si cambia desde la página de Settings
+  useEffect(() => {
+    const syncTheme = () => {
+      const currentTheme = localStorage.getItem("theme") || "dark";
+      setIsDarkMode(currentTheme === "dark");
+    };
+
+    window.addEventListener("storage", syncTheme);
+    return () => window.removeEventListener("storage", syncTheme);
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem("access");
     navigate("/login");
@@ -58,6 +69,24 @@ function DashboardLayout() {
   // Handlers para el menú del perfil
   const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
+
+  // Handler para cambiar el tema visual de forma global
+  const handleThemeToggle = (e) => {
+    const checked = e.target.checked;
+    setIsDarkMode(checked);
+    const nextTheme = checked ? "dark" : "light";
+    localStorage.setItem("theme", nextTheme);
+    
+    const root = window.document.documentElement;
+    if (nextTheme === "dark") {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+    
+    // Dispara un evento global para que componentes como SettingsPage se enteren del cambio
+    window.dispatchEvent(new Event("storage"));
+  };
 
   // Handler para depósitos y retiros
   const handleCashAction = async (actionType) => {
@@ -105,7 +134,7 @@ function DashboardLayout() {
   });
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#0b0e11" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: isDarkMode ? "#0b0e11" : "#f8fafc" }}>
       
       {/* ================= BARRA SUPERIOR (NAVBAR PREMIUM) ================= */}
       <AppBar 
@@ -114,8 +143,8 @@ function DashboardLayout() {
         sx={{ 
           width: "100%", 
           zIndex: (theme) => theme.zIndex.drawer + 1, 
-          bgcolor: "#15181e", 
-          borderBottom: "1px solid #1c2025" 
+          bgcolor: isDarkMode ? "#15181e" : "#ffffff", 
+          borderBottom: isDarkMode ? "1px solid #1c2025" : "1px solid #e2e8f0" 
         }}
       >
         <Toolbar sx={{ display: "flex", justifyContent: "space-between", px: "24px !important" }}>
@@ -123,7 +152,7 @@ function DashboardLayout() {
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <LogoIcon sx={{ color: "#4caf50", fontSize: 26 }} />
             </Box>
-            <Typography variant="h6" fontWeight={800} letterSpacing={0.5} sx={{ color: "white", fontSize: "1.05rem" }}>
+            <Typography variant="h6" fontWeight={800} letterSpacing={0.5} sx={{ color: isDarkMode ? "white" : "#0f172a", fontSize: "1.05rem" }}>
               PEAK INVESTMENTS
             </Typography>
           </Stack>
@@ -134,12 +163,12 @@ function DashboardLayout() {
               alignItems="center" 
               spacing={1.5} 
               onClick={handleMenuOpen} 
-              sx={{ cursor: 'pointer', p: 0.8, borderRadius: 2, '&:hover': { bgcolor: '#1c2025' } }}
+              sx={{ cursor: 'pointer', p: 0.8, borderRadius: 2, '&:hover': { bgcolor: isDarkMode ? '#1c2025' : '#f1f5f9' } }}
             >
-              <Typography variant="body2" fontWeight={600} sx={{ color: "#9ca3af" }}>
+              <Typography variant="body2" fontWeight={600} sx={{ color: isDarkMode ? "#9ca3af" : "#475569" }}>
                 Martín
               </Typography>
-              <Avatar sx={{ width: 32, height: 32, bgcolor: "#1c2025", border: "1px solid #2d3748", color: "#9ca3af" }}>
+              <Avatar sx={{ width: 32, height: 32, bgcolor: isDarkMode ? "#1c2025" : "#e2e8f0", border: isDarkMode ? "1px solid #2d3748" : "1px solid #cbd5e1", color: isDarkMode ? "#9ca3af" : "#475569" }}>
                 <AccountCircle sx={{ fontSize: 28 }} />
               </Avatar>
             </Stack>
@@ -152,58 +181,53 @@ function DashboardLayout() {
               disableScrollLock
               PaperProps={{
                 sx: { 
-                  bgcolor: "#15181e", 
-                  color: "white", 
-                  border: "1px solid #1c2025", 
+                  bgcolor: isDarkMode ? "#15181e" : "#ffffff", 
+                  color: isDarkMode ? "white" : "#0f172a", 
+                  border: isDarkMode ? "1px solid #1c2025" : "1px solid #e2e8f0", 
                   mt: 1.5,
                   minWidth: 220,
-                  boxShadow: "0px 8px 24px rgba(0,0,0,0.5)",
+                  boxShadow: isDarkMode ? "0px 8px 24px rgba(0,0,0,0.5)" : "0px 8px 24px rgba(0,0,0,0.1)",
                   "& .MuiMenuItem-root": {
                     fontSize: "0.88rem",
                     py: 1.2,
-                    color: "#9ca3af",
-                    "&:hover": { bgcolor: "#1c2025", color: "white" }
+                    color: isDarkMode ? "#9ca3af" : "#475569",
+                    "&:hover": { bgcolor: isDarkMode ? "#1c2025" : "#f1f5f9", color: isDarkMode ? "white" : "#0f172a" }
                   }
                 }
               }}
             >
-              <MenuItem onClick={() => { handleMenuClose(); navigate("/investor-profile"); }}>
+              <MenuItem onClick={() => { handleMenuClose(); navigate("/settings/profile"); }}>
                 <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}><AccountBox sx={{ fontSize: 20 }} /></ListItemIcon>
                 Mi Perfil
               </MenuItem>
               
-              <MenuItem onClick={() => { handleMenuClose(); navigate("/security"); }}>
+              <MenuItem onClick={() => { handleMenuClose(); navigate("/settings/security"); }}>
                 <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}><Shield sx={{ fontSize: 20 }} /></ListItemIcon>
                 Seguridad
               </MenuItem>
 
-              <MenuItem onClick={() => { handleMenuClose(); navigate("/settings"); }}>
+              <MenuItem onClick={() => { handleMenuClose(); navigate("/settings/config"); }}>
                 <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}><Settings sx={{ fontSize: 20 }} /></ListItemIcon>
                 Configuración
               </MenuItem>
 
-                {/* Dejalo configurado así: */}
-              <MenuItem onClick={() => { handleMenuClose(); navigate("/help"); }}>
+              <MenuItem onClick={() => { handleMenuClose(); navigate("/settings/help"); }}>
                 <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}><Help sx={{ fontSize: 20 }} /></ListItemIcon>
                 Centro de Ayuda
               </MenuItem>
 
-              <MenuItem onClick={() => { handleMenuClose(); navigate("/language"); }}>
-                <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}><Language sx={{ fontSize: 20 }} /></ListItemIcon>
-                Idioma
-              </MenuItem>
+              <Divider sx={{ bgcolor: isDarkMode ? "#1c2025" : "#e2e8f0", my: "4px !important" }} />
 
-              <Divider sx={{ bgcolor: "#1c2025", my: "4px !important" }} />
-
-              <MenuItem disableRipple sx={{ "&:hover": { bgcolor: "transparent !important", color: "#9ca3af !important" }, display: "flex", justifyContent: "space-between", width: "100%" }}>
+              {/* SECCIÓN CONFIGURADA: TEMA VISUAL */}
+              <MenuItem disableRipple sx={{ "&:hover": { bgcolor: "transparent !important", color: "inherit !important" }, display: "flex", justifyContent: "space-between", width: "100%" }}>
                 <Box sx={{ display: "flex", alignItems: "center" }}>
                   <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}><DarkMode sx={{ fontSize: 20 }} /></ListItemIcon>
-                  Modo Oscuro
+                  Tema Visual
                 </Box>
                 <Switch 
                   size="small" 
                   checked={isDarkMode} 
-                  onChange={(e) => setIsDarkMode(e.target.checked)}
+                  onChange={handleThemeToggle}
                   sx={{
                     "& .MuiSwitch-switchBase.Mui-checked": { color: "#4caf50" },
                     "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { backgroundColor: "#4caf50" }
@@ -211,7 +235,7 @@ function DashboardLayout() {
                 />
               </MenuItem>
 
-              <Divider sx={{ bgcolor: "#1c2025", my: "4px !important" }} />
+              <Divider sx={{ bgcolor: isDarkMode ? "#1c2025" : "#e2e8f0", my: "4px !important" }} />
 
               <MenuItem onClick={() => { handleMenuClose(); handleLogout(); }} sx={{ "&:hover": { color: "#f44336 !important", bgcolor: "rgba(244, 67, 54, 0.08) !important" } }}>
                 <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}><Logout sx={{ fontSize: 20, color: "inherit" }} /></ListItemIcon>
@@ -228,13 +252,14 @@ function DashboardLayout() {
         sx={{ 
           width: 250, 
           flexShrink: 0,
+          display: { xs: "none", md: "block" },
           boxSizing: "border-box",
-          bgcolor: "#15181e",
-          borderRight: "1px solid #1c2025",
+          bgcolor: isDarkMode ? "#15181e" : "#ffffff",
+          borderRight: isDarkMode ? "1px solid #1c2025" : "1px solid #e2e8f0",
           pt: "64px" 
         }}
       >
-        <List sx={{ px: 1.5, py: 3, "& .MuiListItemButton-root": { borderRadius: 2, mb: 0.5, color: "#9ca3af", "&:hover": { bgcolor: "#1c2025", color: "white" } } }}>
+        <List sx={{ px: 1.5, py: 3, "& .MuiListItemButton-root": { borderRadius: 2, mb: 0.5, color: isDarkMode ? "#9ca3af" : "#475569", "&:hover": { bgcolor: isDarkMode ? "#1c2025" : "#f1f5f9", color: isDarkMode ? "white" : "#0f172a" } } }}>
           
           {/* 1. MI CUENTA */}
           <ListItemButton onClick={() => setOpenAccount(!openAccount)}>
@@ -251,20 +276,14 @@ function DashboardLayout() {
                 <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#4caf50" }} />
                 <ListItemText primary="Estado de Cuenta" slotProps={{ primary: { fontSize: "0.85rem" } }} />
               </ListItemButton>
-              
-              {/* BOTÓN RENDIMIENTO E INFORMES */}
               <ListItemButton onClick={() => navigate("/reports")} sx={{ py: 0.6 }}>
                 <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#4caf50" }} />
                 <ListItemText primary="Rendimiento e Informes" slotProps={{ primary: { fontSize: "0.85rem" } }} />
               </ListItemButton>
-
-              {/* Perfil de Inversor */}
               <ListItemButton onClick={() => navigate("/investor-profile")} sx={{ py: 0.6 }}>
                 <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#4caf50" }} />
-                <ListItemText primary="Perfil de Inversor" slotProps={{ primary: { fontSize: "0.85rem", color: "white", fontWeight: 600 } }} />
+                <ListItemText primary="Perfil de Inversor" slotProps={{ primary: { fontSize: "0.85rem" } }} />
               </ListItemButton>
-
-              {/* Ingresar / Retirar Dinero */}
               <ListItemButton onClick={() => setOpenCashModal(true)} sx={{ py: 0.6 }}>
                 <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#4caf50" }} />
                 <ListItemText primary="Ingresar / Retirar Dinero" slotProps={{ primary: { fontSize: "0.85rem" } }} />
@@ -311,9 +330,8 @@ function DashboardLayout() {
             <List component="div" disablePadding sx={{ pl: 3.5 }}>
               <ListItemButton onClick={() => navigate("/composition")} sx={{ py: 0.6 }}>
                 <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#9c27b0" }} />
-                <ListItemText primary="Composición de Activos" slotProps={{ primary: { fontSize: "0.85rem", color: "white", fontWeight: 600 } }} />
+                <ListItemText primary="Composición de Activos" slotProps={{ primary: { fontSize: "0.85rem" } }} />
               </ListItemButton>
-              
               <ListItemButton onClick={() => navigate("/history")} sx={{ py: 0.6 }}>
                 <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "gray" }} />
                 <ListItemText primary="Historial de Órdenes" slotProps={{ primary: { fontSize: "0.85rem" } }} />
@@ -370,7 +388,7 @@ function DashboardLayout() {
           pt: "88px", 
           minHeight: "100vh",
           overflowX: "hidden",
-          bgcolor: "#0b0e11"
+          bgcolor: isDarkMode ? "#0b0e11" : "#f8fafc"
         }}
       >
         <Outlet />
@@ -383,18 +401,18 @@ function DashboardLayout() {
         closeAfterTransition
         sx={{ display: "flex", alignItems: "center", justifyContent: "center", p: 2 }}
       >
-        <Card sx={{ backgroundColor: "#15181e", borderRadius: 3, border: "1px solid #1c2025", maxWidth: 450, width: "100%", boxShadow: 24 }}>
+        <Card sx={{ backgroundColor: isDarkMode ? "#15181e" : "#ffffff", borderRadius: 3, border: isDarkMode ? "1px solid #1c2025" : "1px solid #e2e8f0", maxWidth: 450, width: "100%", boxShadow: 24 }}>
           <CardContent sx={{ p: 4 }}>
             <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-              <Typography variant="h6" fontWeight={800} color="white">
+              <Typography variant="h6" fontWeight={800} color={isDarkMode ? "white" : "#0f172a"}>
                 Movimiento de Fondos
               </Typography>
-              <IconButton onClick={handleCloseModal} sx={{ color: "#9ca3af", "&:hover": { color: "white" } }}>
+              <IconButton onClick={handleCloseModal} sx={{ color: isDarkMode ? "#9ca3af" : "#475569", "&:hover": { color: isDarkMode ? "white" : "#0f172a" } }}>
                 <CloseIcon />
               </IconButton>
             </Stack>
 
-            <Typography color="gray" variant="body2" sx={{ mb: 3 }}>
+            <Typography color={isDarkMode ? "gray" : "#64748b"} variant="body2" sx={{ mb: 3 }}>
               Ingresá el monto para inyectar o retirar efectivo del saldo disponible de tu cuenta.
             </Typography>
 
@@ -425,16 +443,16 @@ function DashboardLayout() {
                 disabled={cashLoading}
                 placeholder="0.00"
                 slotProps={{
-                  inputLabel: { style: { color: "#9ca3af" } },
-                  htmlInput: { min: "0", step: "any", style: { color: "white", fontWeight: 600 } },
+                  inputLabel: { style: { color: isDarkMode ? "#9ca3af" : "#64748b" } },
+                  htmlInput: { min: "0", step: "any", style: { color: isDarkMode ? "white" : "#0f172a", fontWeight: 600 } },
                   input: {
                     startAdornment: <InputAdornment position="start" sx={{ "& .MuiTypography-root": { color: "#4caf50", fontWeight: 700 } }}>$</InputAdornment>,
                   }
                 }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    backgroundColor: "#0b0e11",
-                    "& fieldset": { borderColor: "#2d3748" },
+                    backgroundColor: isDarkMode ? "#0b0e11" : "#f1f5f9",
+                    "& fieldset": { borderColor: isDarkMode ? "#2d3748" : "#cbd5e1" },
                     "&:hover fieldset": { borderColor: "#4caf50" },
                     "&.Mui-focused fieldset": { borderColor: "#4caf50" }
                   }

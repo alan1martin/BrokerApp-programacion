@@ -92,6 +92,13 @@ function App() {
             path="reports"
             element={<Reports />}
           />
+
+          {/* Configuración dinámica: detecta sub-secciones como /settings/profile */}
+          
+          <Route path="settings/:tab" element={<SettingsPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+
+
         </Route>
       </Routes>
     </BrowserRouter>
