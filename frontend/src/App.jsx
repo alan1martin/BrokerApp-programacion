@@ -15,7 +15,8 @@ import LoginPage from "./pages/login-page";
 import TradingPage from "./pages/trading-page"; 
 import HistoryPage from "./pages/history-page";
 import InvestorProfilePage from "./pages/investor-profile-page"; 
-import Reports from "./pages/reports"; // Importación de la página de informes
+import Reports from "./pages/reports"; 
+import FavoritesPage from "./pages/favorites-page";
 
 function App() {
   return (
@@ -95,10 +96,22 @@ function App() {
 
           {/* Configuración dinámica: detecta sub-secciones como /settings/profile */}
           
-          <Route path="settings/:tab" element={<SettingsPage />} />
-            <Route path="settings" element={<SettingsPage />} />
+          <Route 
+            path="settings/:tab" 
+            element={<SettingsPage />} 
+          />
+          
+          <Route 
+            path="settings" 
+            element={<SettingsPage />} 
+          />
 
-
+          
+          <Route 
+            path="markets/favorites" 
+            element={<FavoritesPage />} 
+          />
+        
         </Route>
       </Routes>
     </BrowserRouter>

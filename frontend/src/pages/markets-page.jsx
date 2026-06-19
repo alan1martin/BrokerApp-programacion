@@ -1,4 +1,5 @@
 // src/pages/market-page.jsx
+import { useState, useEffect } from "react";
 import { 
   Typography, 
   Stack, 
@@ -11,20 +12,69 @@ import {
   Paper, 
   Button, 
   Chip,
-  Box
+  Box,
+  IconButton
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useMarket } from "../context/market-context.jsx";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import BoltIcon from "@mui/icons-material/Bolt";
+import StarIcon from "@mui/icons-material/Star";
+import StarBorderIcon from "@mui/icons-material/StarBorder";
+
+// Servicios de la API
+import { getFavorites, toggleFavorite } from "../services/market-service";
 
 function MarketsPage() {
   const { assets } = useMarket();
   const navigate = useNavigate();
+  
+  // Sincronizamos el estado inicial directamente con localStorage por las dudas
+  const [favorites, setFavorites] = useState(() => {
+    const saved = localStorage.getItem("peak_favorites");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Intentar cargar favoritos desde SQLite al montar. Si falla, el fallback de localStorage ya está listo.
+  useEffect(() => {
+    async function loadFavorites() {
+      try {
+        const data = await getFavorites();
+        if (data && Array.isArray(data)) {
+          setFavorites(data);
+          localStorage.setItem("peak_favorites", JSON.stringify(data));
+        }
+      } catch (error) {
+        console.warn("API SQLite no disponible. Usando datos guardados en localStorage local.");
+      }
+    }
+    loadFavorites();
+  }, []);
 
   const handleTradeRedirect = (symbol) => {
     navigate("/trading", { state: { defaultSymbol: symbol } });
+  };
+
+  // Handler interactivo optimizado con persistencia local garantizada
+  const handleToggleFavorite = async (symbol) => {
+    const isCurrentlyFav = favorites.includes(symbol);
+    
+    // Calculamos el próximo estado
+    const nextFavorites = isCurrentlyFav 
+      ? favorites.filter((fav) => fav !== symbol) 
+      : [...favorites, symbol];
+
+    // 1. Actualizamos el estado de React y localStorage de inmediato para asegurar persistencia local
+    setFavorites(nextFavorites);
+    localStorage.setItem("peak_favorites", JSON.stringify(nextFavorites));
+
+    // 2. Intentamos impactar en SQLite en segundo plano
+    try {
+      await toggleFavorite(symbol);
+    } catch (error) {
+      console.error("No se pudo persistir en la base de datos remota, guardado localmente en navegador:", error.message);
+    }
   };
 
   return (
@@ -42,6 +92,7 @@ function MarketsPage() {
         <Table aria-label="tabla de mercados">
           <TableHead sx={{ backgroundColor: "#1e222b" }}>
             <TableRow>
+              <TableCell sx={{ fontWeight: 600, color: "gray", width: 60 }} align="center">FAV</TableCell>
               <TableCell sx={{ fontWeight: 600, color: "gray" }}>ACTIVO</TableCell>
               <TableCell sx={{ fontWeight: 600, color: "gray" }}>NOMBRE</TableCell>
               <TableCell sx={{ fontWeight: 600, color: "gray" }} align="right">PRECIO (USD)</TableCell>
@@ -53,12 +104,23 @@ function MarketsPage() {
           <TableBody>
             {assets.map((asset) => {
               const isPositive = asset.change24h >= 0;
+              const isFav = favorites.includes(asset.symbol);
               
               return (
                 <TableRow 
                   key={asset.symbol}
                   sx={{ '&:last-child td, &:last-child th': { border: 0 }, '&:hover': { backgroundColor: "#1c202a" } }}
                 >
+                  {/* Columna de la estrella de Favoritos */}
+                  <TableCell align="center">
+                    <IconButton 
+                      onClick={() => handleToggleFavorite(asset.symbol)}
+                      sx={{ color: isFav ? "#ffb703" : "#475569", "&:hover": { color: "#ffb703" } }}
+                    >
+                      {isFav ? <StarIcon /> : <StarBorderIcon />}
+                    </IconButton>
+                  </TableCell>
+
                   {/* Ticker */}
                   <TableCell component="th" scope="row" sx={{ fontWeight: 700, color: "white" }}>
                     {asset.symbol}
@@ -84,23 +146,30 @@ function MarketsPage() {
                   
                   {/* Chip */}
                   <TableCell align="center">
-                    <Chip 
-                      label={asset.symbol === "BTC" ? "24/7 Vivo" : "Wall Street"} 
-                      color={asset.symbol === "BTC" ? "warning" : "default"}
-                      size="small"
-                      sx={{ fontWeight: 600, borderRadius: 1 }}
-                    />
+                    <Box>
+                      <Chip 
+                        label={asset.symbol === "BTC" ? "24/7 Vivo" : "Wall Street"} 
+                        color={asset.symbol === "BTC" ? "warning" : "default"}
+                        size="small"
+                        sx={{ fontWeight: 600, borderRadius: 1 }}
+                      />
+                    </Box>
                   </TableCell>
 
                   {/* Operar */}
                   <TableCell align="center">
                     <Button
                       variant="contained"
-                      color={isPositive ? "primary" : "inherit"}
+                      color="primary"
                       size="small"
                       startIcon={<BoltIcon />}
                       onClick={() => handleTradeRedirect(asset.symbol)}
-                      sx={{ fontWeight: 700, textTransform: "none", borderRadius: 1.5, px: 2 }}
+                      sx={{ 
+                        fontWeight: 700, 
+                        textTransform: "none", 
+                        borderRadius: 1.5, 
+                        px: 2
+                      }}
                     >
                       Operar
                     </Button>
