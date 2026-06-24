@@ -7,3 +7,5 @@ numpy
 gunicorn
 python-decouple
 djangorestframework-simplejwt
+psycopg2-binary
+dj-database-url

@@ -8,9 +8,10 @@ ENV PYTHONUNBUFFERED=1
 # 3. Establece el directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-# 4. Instala las dependencias del sistema necesarias (por si pandas o numpy las requieren)
+# 4. Instala las dependencias del sistema necesarias (incluye cabeceras para PostgreSQL)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # 5. Copia el archivo de requisitos e instala las dependencias de Python
@@ -24,6 +25,5 @@ COPY . /app/
 # 7. Expone el puerto 8000 que usa Django
 EXPOSE 8000
 
-# 8. Comando para producción usando Gunicorn
-# NOTA: Reemplaza 'core' por el nombre de la carpeta que contiene tu archivo wsgi.py
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# 8. Comando de producción: ejecuta migraciones y levanta con Gunicorn usando la carpeta config
+CMD ["sh", "-c", "python manage.py migrate && gunicorn config.wsgi:application --bind 0.0.0.0:8000"]
