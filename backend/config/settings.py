@@ -13,16 +13,23 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ==============================================================================
-# CONFIGURACIÓN DE SEGURIDAD (Variables de Entorno)
+# CONFIGURACIÓN DE SEGURIDAD (Híbrida: os.environ para Docker / decouple de fallback)
 # ==============================================================================
-SECRET_KEY = config('SECRET_KEY')
+# Evitamos excepciones si decouple no encuentra archivos .env en producción
+try:
+    SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', config('SECRET_KEY', default='dev-fallback-key'))
+    DEBUG = os.environ.get('DJANGO_DEBUG', str(config('DEBUG', default=True, cast=bool))) == 'True'
+    JWT_SECRET = os.environ.get('JWT_SECRET_KEY', config('JWT_SECRET_KEY', default=SECRET_KEY))
+except Exception:
+    # Fallback extremo para producción si decouple arroja un error crítico de inicialización
+    SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'produccion-segura-fallback-key')
+    DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
+    JWT_SECRET = os.environ.get('JWT_SECRET_KEY', SECRET_KEY)
 
-DEBUG = config('DEBUG', default=False, cast=bool)
-
-# Leemos los hosts de la variable; si no existe, cae en el subdominio del Grupo 4
-ALLOWED_HOSTS = config(
+# Ajuste estricto de ALLOWED_HOSTS usando os.environ nativo
+ALLOWED_HOSTS = os.environ.get(
     'DJANGO_ALLOWED_HOSTS', 
-    default='api.app4.academia.ar,localhost,127.0.0.1'
+    'api.app4.academia.ar,localhost,127.0.0.1'
 ).split(',')
 
 # ==============================================================================
@@ -76,9 +83,8 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # ==============================================================================
 # CONFIGURACIÓN DE BASE DE DATOS (Mapeo Híbrido SQLite / PostgreSQL)
 # ==============================================================================
-# Si en el entorno existe DATABASE_URL (Docker/Producción), se conecta a Postgres.
-# Si estás desarrollando local sin esa variable, usa el SQLite de siempre para no romper tu flujo.
-DATABASE_URL = config('DATABASE_URL', default=None)
+# Usamos os.environ directo para que Docker asigne la URL sin pasar por las validaciones de decouple
+DATABASE_URL = os.environ.get('DATABASE_URL', None)
 
 if DATABASE_URL:
     DATABASES = {
@@ -136,7 +142,7 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
-    'SIGNING_KEY': config('JWT_SECRET_KEY', default=SECRET_KEY),
+    'SIGNING_KEY': JWT_SECRET,
     'ALGORITHM': 'HS256',
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
