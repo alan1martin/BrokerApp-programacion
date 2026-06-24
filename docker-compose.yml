@@ -1,37 +1,72 @@
-version: '3.8'
 
 services:
+  # ================= SERVICIO DE LA BASE DE DATOS (POSTGRESQL) =================
+  db:
+    image: postgres:16
+    container_name: app4-db
+    restart: always
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - app4-db-data:/var/lib/postgresql/data
+    networks:
+      - nginx-proxy
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+
   # ================= SERVICIO DEL BACKEND (DJANGO) =================
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: broker_backend
-    volumes:
-      - ./backend:/app
-    env_file:         
-      - ./backend/.env  
-    ports:
-      - "8000:8000"
+    container_name: app4-backend
+    restart: always
+    depends_on:
+      - db
     environment:
-      - DEBUG=1 # Podés cambiarlo a 0 en producción real si manejan variables de entorno
+      - VIRTUAL_HOST=api.app4.academia.ar
+      - VIRTUAL_PORT=8000
+      - LETSENCRYPT_HOST=api.app4.academia.ar
+      - LETSENCRYPT_EMAIL=admin@academia.ar
+      - DJANGO_ALLOWED_HOSTS=api.app4.academia.ar,localhost,127.0.0.1
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     networks:
-      - broker_network
+      - nginx-proxy
+    deploy:
+      resources:
+        limits:
+          memory: 384m
 
   # ================= SERVICIO DEL FRONTEND (REACT + VITE + NGINX) =================
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: broker_frontend
-    ports:
-      - "80:80" # Tu profesor entrará por http://localhost (puerto 80 por defecto)
+    container_name: app4-frontend
+    restart: always
     depends_on:
       - backend
+    environment:
+      - VIRTUAL_HOST=app4.academia.ar
+      - VIRTUAL_PORT=80
+      - LETSENCRYPT_HOST=app4.academia.ar
+      - LETSENCRYPT_EMAIL=admin@academia.ar
     networks:
-      - broker_network
+      - nginx-proxy
+    deploy:
+      resources:
+        limits:
+          memory: 128m
 
-# Definición de la red interna para que se comuniquen entre contenedores
+# Volúmenes para que no se borren los datos de Postgres
+volumes:
+  app4-db-data:
+
+# Red Externa Obligatoria conectada al Nginx Proxy del servidor
 networks:
-  broker_network:
-    driver: bridge
+  nginx-proxy:
+    external: true
