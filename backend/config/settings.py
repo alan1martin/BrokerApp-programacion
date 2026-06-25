@@ -26,11 +26,15 @@ except Exception:
     DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
     JWT_SECRET = os.environ.get('JWT_SECRET_KEY', SECRET_KEY)
 
-# Ajuste estricto de ALLOWED_HOSTS usando os.environ nativo
-ALLOWED_HOSTS = os.environ.get(
-    'DJANGO_ALLOWED_HOSTS', 
-    'api.app4.academia.ar,localhost,127.0.0.1'
-).split(',')
+# Ajuste ultra-seguro de ALLOWED_HOSTS para Producción
+raw_hosts = os.environ.get('DJANGO_ALLOWED_HOSTS', 'api.app4.academia.ar,localhost,127.0.0.1')
+if ',' in raw_hosts:
+    ALLOWED_HOSTS = [host.strip() for host in raw_hosts.split(',') if host.strip()]
+else:
+    ALLOWED_HOSTS = [raw_hosts.strip()] if raw_hosts.strip() else ['api.app4.academia.ar']
+
+# OBLIGATORIO PARA PRODUCCIÓN: Permitir que Django acepte peticiones detrás de un proxy inverso HTTPS
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # ==============================================================================
 # DEFINICIÓN DE APLICACIONES Y MIDDLEWARES

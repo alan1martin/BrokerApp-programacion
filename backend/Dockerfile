@@ -26,4 +26,5 @@ COPY . /app/
 EXPOSE 8000
 
 # 8. Comando de producción: ejecuta migraciones y levanta con Gunicorn usando la carpeta config
-CMD ["sh", "-c", "python manage.py migrate && gunicorn config.wsgi:application --bind 0.0.0.0:8000"]
+# Migra, crea superusuario automáticamente si no existe y levanta Gunicorn
+CMD ["sh", "-c", "python manage.py migrate --noinput && DJANGO_SUPERUSER_PASSWORD=admin1234 python manage.py createsuperuser --noinput --username admin --email admin@academia.ar || true && gunicorn config.wsgi:application --bind 0.0.0.0:8000"]
