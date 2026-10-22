@@ -1,4 +1,3 @@
-// src/pages/investor-profile-page.jsx
 import { useState } from "react";
 import { 
   Typography, Stack, Card, CardContent, Button, 
@@ -137,7 +136,6 @@ function InvestorProfilePage() {
   const [totalScore, setTotalScore] = useState(0);
   const [finalProfile, setFinalProfile] = useState(null);
 
-  // Iniciar el Test
   const handleStart = () => {
     setStep("quiz");
     setCurrentQuestionIndex(0);
@@ -145,13 +143,11 @@ function InvestorProfilePage() {
     setTotalScore(0);
   };
 
-  // Manejar selección de respuesta
   const handleRadioChange = (event) => {
     const score = parseInt(event.target.value, 10);
     setSelectedAnswer(score);
   };
 
-  // Siguiente pregunta o calcular resultado
   const handleNext = () => {
     const newScore = totalScore + selectedAnswer;
     setTotalScore(newScore);
@@ -160,15 +156,11 @@ function InvestorProfilePage() {
       setCurrentQuestionIndex((prev) => prev + 1);
       setSelectedAnswer(null);
     } else {
-      // Calcular perfil final basado en el rango de puntos para 10 preguntas
-      // Puntos posibles: 10 (mínimo) a 30 (máximo)
       let profileKey = "moderado";
       if (newScore <= 16) profileKey = "conservador";
       else if (newScore >= 24) profileKey = "agresivo";
 
       setFinalProfile(PROFILES[profileKey]);
-      
-      // Guardamos en localStorage para que el resto de la app (como el Trading) pueda consumirlo
       localStorage.setItem("investor_profile", profileKey);
       setStep("result");
     }
@@ -177,7 +169,7 @@ function InvestorProfilePage() {
   const progressPercentage = (currentQuestionIndex / QUESTIONS.length) * 100;
 
   return (
-    <Stack spacing={4} sx={{ maxWidth: 700, margin: "0 auto", width: "100%" }}>
+    <Stack spacing={4} sx={{ width: "100%" }}>
       {/* Encabezado */}
       <Stack>
         <Typography variant="h4" fontWeight={700} color="white">
@@ -190,13 +182,13 @@ function InvestorProfilePage() {
 
       {/* --- ESTADO 1: PANTALLA DE INICIO --- */}
       {step === "start" && (
-        <Card sx={{ backgroundColor: "#15181e", borderRadius: 2, border: "1px solid #1c2025", p: 2 }}>
-          <CardContent sx={{ textAlign: "center", py: 4 }}>
+        <Card sx={{ backgroundColor: "#15181e", borderRadius: 2, border: "1px solid #1c2025", p: 2, width: "100%" }}>
+          <CardContent sx={{ textAlign: "center", py: 5 }}>
             <AssignmentIndIcon sx={{ fontSize: 60, color: "primary.main", mb: 2 }} />
             <Typography variant="h5" fontWeight={700} color="white" gutterBottom>
               ¿Qué tipo de inversor sos?
             </Typography>
-            <Typography color="gray" variant="body1" sx={{ mb: 4, maxWidth: 500, mx: "auto" }}>
+            <Typography color="gray" variant="body1" sx={{ mb: 4, maxWidth: 600, mx: "auto" }}>
               Antes de armar tu cartera de Cedears o bonos, es fundamental saber cómo reaccionás ante los movimientos del mercado. Este test te tomará menos de 3 minutos.
             </Typography>
             <Button
@@ -213,7 +205,7 @@ function InvestorProfilePage() {
 
       {/* --- ESTADO 2: CUESTIONARIO EN PASOS --- */}
       {step === "quiz" && (
-        <Stack spacing={3}>
+        <Stack spacing={3} sx={{ width: "100%" }}>
           {/* Barra de Progreso */}
           <Box sx={{ width: "100%" }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
@@ -224,7 +216,7 @@ function InvestorProfilePage() {
           </Box>
 
           {/* Tarjeta de Pregunta */}
-          <Card sx={{ backgroundColor: "#15181e", borderRadius: 2, border: "1px solid #1c2025" }}>
+          <Card sx={{ backgroundColor: "#15181e", borderRadius: 2, border: "1px solid #1c2025", width: "100%" }}>
             <CardContent sx={{ p: 4 }}>
               <Typography variant="h6" fontWeight={600} color="white" sx={{ mb: 3 }}>
                 {QUESTIONS[currentQuestionIndex].question}
@@ -241,7 +233,7 @@ function InvestorProfilePage() {
                           border: "1px solid",
                           borderColor: isSelected ? "primary.main" : "#222731",
                           borderRadius: 2,
-                          p: 1.5,
+                          p: 2,
                           backgroundColor: isSelected ? "rgba(33, 150, 243, 0.04)" : "transparent",
                           transition: "all 0.2s ease",
                           "&:hover": { borderColor: "primary.main", backgroundColor: "rgba(33, 150, 243, 0.02)" }
@@ -250,7 +242,7 @@ function InvestorProfilePage() {
                         <FormControlLabel
                           value={opt.score}
                           control={<Radio size="small" />}
-                          label={<Typography variant="body2" color="white" sx={{ pl: 0.5 }}>{opt.text}</Typography>}
+                          label={<Typography variant="body1" color="white" sx={{ pl: 0.5 }}>{opt.text}</Typography>}
                           sx={{ width: "100%", margin: 0 }}
                         />
                       </Box>
@@ -265,7 +257,7 @@ function InvestorProfilePage() {
                   endIcon={<ArrowForwardIcon />}
                   disabled={selectedAnswer === null}
                   onClick={handleNext}
-                  sx={{ fontWeight: 700, textTransform: "none", borderRadius: 1.5, px: 3 }}
+                  sx={{ fontWeight: 700, textTransform: "none", borderRadius: 1.5, px: 4, py: 1 }}
                 >
                   {currentQuestionIndex === QUESTIONS.length - 1 ? "Finalizar" : "Siguiente"}
                 </Button>
@@ -277,14 +269,14 @@ function InvestorProfilePage() {
 
       {/* --- ESTADO 3: PANTALLA DE RESULTADO --- */}
       {step === "result" && finalProfile && (
-        <Card sx={{ backgroundColor: "#15181e", borderRadius: 2, border: "1px solid #1c2025", p: 1 }}>
+        <Card sx={{ backgroundColor: "#15181e", borderRadius: 2, border: "1px solid #1c2025", p: 2, width: "100%" }}>
           <CardContent sx={{ p: 4 }}>
-            <Stack alignItems="center" textAlign="center" spacing={2} sx={{ mb: 3 }}>
+            <Stack alignItems="center" textAlign="center" spacing={2} sx={{ mb: 4 }}>
               {finalProfile.icon}
               <Typography variant="h4" fontWeight={800} color={finalProfile.color}>
                 {finalProfile.title}
               </Typography>
-              <Typography variant="body1" color="gray" sx={{ maxWidth: 550 }}>
+              <Typography variant="body1" color="gray" sx={{ maxWidth: 700 }}>
                 {finalProfile.description}
               </Typography>
             </Stack>
@@ -293,7 +285,7 @@ function InvestorProfilePage() {
               <Typography variant="subtitle1" fontWeight={700} color="white" sx={{ mb: 2 }}>
                 Instrumentos sugeridos para tu perfil:
               </Typography>
-              <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+              <Stack direction="row" spacing={1.5} useFlexGap flexWrap="wrap">
                 {finalProfile.instruments.map((inst, index) => (
                   <Chip 
                     key={index} 
@@ -303,7 +295,8 @@ function InvestorProfilePage() {
                       color: "white", 
                       borderColor: "#333b48", 
                       backgroundColor: "#15181e", 
-                      fontWeight: 600 
+                      fontWeight: 600,
+                      p: 1
                     }} 
                   />
                 ))}

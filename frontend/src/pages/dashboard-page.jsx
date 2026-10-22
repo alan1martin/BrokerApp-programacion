@@ -1,3 +1,4 @@
+//frontend/src/pages/dashboard-page.jsx
 import { Grid, Typography, Stack, Card, CardContent, Box, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useMarket } from "../context/market-context.jsx";

@@ -1,10 +1,8 @@
-// src/layouts/dashboard-layout.jsx
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { 
   Box, AppBar, Toolbar, Typography, Avatar, IconButton, Stack,
   List, ListItemButton, ListItemIcon, ListItemText, Collapse,
-  Modal, Card, CardContent, TextField, InputAdornment, Button, Alert,
   Menu, MenuItem, Divider, Switch, Drawer
 } from "@mui/material";
 
@@ -18,17 +16,15 @@ import Settings from "@mui/icons-material/Settings";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import FiberManualRecord from "@mui/icons-material/FiberManualRecord";
-import CloseIcon from "@mui/icons-material/Close";
-import ArrowUpward from "@mui/icons-material/ArrowUpward";
-import ArrowDownward from "@mui/icons-material/ArrowDownward";
 import AccountCircle from "@mui/icons-material/AccountCircle";
 import AccountBox from "@mui/icons-material/AccountBox";
 import Shield from "@mui/icons-material/Shield";
 import Help from "@mui/icons-material/Help"; 
 import DarkMode from "@mui/icons-material/DarkMode";
-import MenuIcon from "@mui/icons-material/Menu"; // Ícono para el menú móvil
+import MenuIcon from "@mui/icons-material/Menu"; 
 
-import { manageCashFunds } from "../services/portfolio-service";
+// NUEVO: Importamos el componente independiente de caja grande
+import CashDialog from "../pages/cash-page";
 
 const drawerWidth = 250;
 
@@ -41,7 +37,7 @@ function DashboardLayout() {
   // Estado local para el Switch de Modo Oscuro sincronizado con localStorage
   const [isDarkMode, setIsDarkMode] = useState(localStorage.getItem("theme") !== "light");
   
-  // NUEVO ESTADO: Controla la apertura del menú lateral en celulares
+  // Controla la apertura del menú lateral en celulares
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Estados para controlar qué menú está desplegado (Dropdowns)
@@ -50,11 +46,8 @@ function DashboardLayout() {
   const [openTrading, setOpenTrading] = useState(false);
   const [openPortfolio, setOpenPortfolio] = useState(false);
 
-  // ESTADOS PARA OPERAR FONDOS
+  // NUEVO ESTADO: Controla la apertura del diálogo grande de caja
   const [openCashModal, setOpenCashModal] = useState(false);
-  const [amount, setAmount] = useState("");
-  const [cashLoading, setCashLoading] = useState(false);
-  const [message, setMessage] = useState(null);
 
   // Sincronizar el estado del switch si cambia desde la página de Settings
   useEffect(() => {
@@ -72,16 +65,13 @@ function DashboardLayout() {
     navigate("/login");
   };
 
-  // Handlers para el menú del perfil
   const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
 
-  // Handler para el menú responsive móvil
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
-  // Handler para cambiar el tema visual de forma global
   const handleThemeToggle = (e) => {
     const checked = e.target.checked;
     setIsDarkMode(checked);
@@ -98,39 +88,6 @@ function DashboardLayout() {
     window.dispatchEvent(new Event("storage"));
   };
 
-  // Handler para depósitos y retiros
-  const handleCashAction = async (actionType) => {
-    if (!amount || parseFloat(amount) <= 0) {
-      setMessage({ type: "error", text: "Por favor, ingresá un monto válido mayor a 0." });
-      return;
-    }
-
-    setCashLoading(true);
-    setMessage(null);
-
-    try {
-      const data = await manageCashFunds(actionType, amount);
-      setMessage({ type: "success", text: data.message });
-      setAmount(""); 
-      
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
-
-    } catch (error) {
-      setMessage({ type: "error", text: error.message });
-    } finally {
-      setCashLoading(false);
-    }
-  };
-
-  const handleCloseModal = () => {
-    setOpenCashModal(false);
-    setAmount("");
-    setMessage(null);
-  };
-
-  // Estilo exacto de logos circulares
   const iconContainerStyle = (bgColor) => ({
     display: "flex",
     alignItems: "center",
@@ -143,7 +100,6 @@ function DashboardLayout() {
     mr: 2
   });
 
-  // CONTENIDO DEL MENU LATERAL (Reutilizado tanto para Desktop como para Mobile)
   const menuContent = (
     <List sx={{ px: 1.5, py: 3, "& .MuiListItemButton-root": { borderRadius: 2, mb: 0.5, color: isDarkMode ? "#9ca3af" : "#475569", "&:hover": { bgcolor: isDarkMode ? "#1c2025" : "#f1f5f9", color: isDarkMode ? "white" : "#0f172a" } } }}>
       
@@ -170,6 +126,7 @@ function DashboardLayout() {
             <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#4caf50" }} />
             <ListItemText primary="Perfil de Inversor" slotProps={{ primary: { fontSize: "0.85rem" } }} />
           </ListItemButton>
+          {/* Abre el componente nuevo CashDialog */}
           <ListItemButton onClick={() => { setOpenCashModal(true); setMobileOpen(false); }} sx={{ py: 0.6 }}>
             <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#4caf50" }} />
             <ListItemText primary="Ingresar / Retirar Dinero" slotProps={{ primary: { fontSize: "0.85rem" } }} />
@@ -196,7 +153,6 @@ function DashboardLayout() {
             <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "gray" }} />
             <ListItemText primary="Análisis Técnico" slotProps={{ primary: { fontSize: "0.85rem" } }} />
           </ListItemButton>
-          {/* SECCIÓN CONFIGURADA: Agregada la navegación correspondiente a la ruta hija */}
           <ListItemButton onClick={() => { navigate("/markets/favorites"); setMobileOpen(false); }} sx={{ py: 0.6 }}>
             <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#2196f3" }} />
             <ListItemText primary="Mis Favoritos" slotProps={{ primary: { fontSize: "0.85rem" } }} />
@@ -269,7 +225,7 @@ function DashboardLayout() {
   return (
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: isDarkMode ? "#0b0e11" : "#f8fafc" }}>
       
-      {/* ================= BARRA SUPERIOR (NAVBAR PREMIUM) ================= */}
+      {/* ================= BARRA SUPERIOR ================= */}
       <AppBar 
         position="fixed" 
         elevation={0}
@@ -282,9 +238,7 @@ function DashboardLayout() {
       >
         <Toolbar sx={{ display: "flex", justifyContent: "space-between", px: "24px !important" }}>
           
-          {/* BOTÓN HAMBURGUESA MÓVIL + LOGO CON BOTÓN REDIRECCIONABLE */}
           <Stack direction="row" alignItems="center" spacing={1.5}>
-            {/* Botón hamburguesa visible solo en celular (xs, sm) y oculto en pc (md+) */}
             <IconButton
               color="inherit"
               aria-label="open drawer"
@@ -299,7 +253,6 @@ function DashboardLayout() {
               <MenuIcon />
             </IconButton>
 
-            {/* Logo y Texto convertidos en botón interactivo hacia "/" */}
             <Stack 
               direction="row" 
               alignItems="center" 
@@ -336,7 +289,6 @@ function DashboardLayout() {
               </Avatar>
             </Stack>
 
-            {/* MENÚ DESPLEGABLE DEL PERFIL CONFIGURADO */}
             <Menu
               anchorEl={anchorEl}
               open={Boolean(anchorEl)}
@@ -381,7 +333,6 @@ function DashboardLayout() {
 
               <Divider sx={{ bgcolor: isDarkMode ? "#1c2025" : "#e2e8f0", my: "4px !important" }} />
 
-              {/* SECCIÓN CONFIGURADA: TEMA VISUAL */}
               <MenuItem disableRipple sx={{ "&:hover": { bgcolor: "transparent !important", color: "inherit !important" }, display: "flex", justifyContent: "space-between", width: "100%" }}>
                 <Box sx={{ display: "flex", alignItems: "center" }}>
                   <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}><DarkMode sx={{ fontSize: 20 }} /></ListItemIcon>
@@ -409,13 +360,12 @@ function DashboardLayout() {
         </Toolbar>
       </AppBar>
 
-      {/* ================= MENÚ RESPONSIVE (SIDEBAR COMPACTO) ================= */}
-      {/* 1. VERSIÓN MÓVIL: Se despliega desde el lateral izquierdo mediante un Drawer temporal */}
+      {/* ================= SIDEBAR (MÓVIL Y DESKTOP) ================= */}
       <Drawer
         variant="temporary"
         open={mobileOpen}
         onClose={handleDrawerToggle}
-        ModalProps={{ keepMounted: true }} // Optimiza rendimiento en móviles
+        ModalProps={{ keepMounted: true }} 
         sx={{
           display: { xs: "block", md: "none" },
           "& .MuiDrawer-paper": { 
@@ -426,11 +376,10 @@ function DashboardLayout() {
           },
         }}
       >
-        <Toolbar /> {/* Espaciador del AppBar */}
+        <Toolbar /> 
         {menuContent}
       </Drawer>
 
-      {/* 2. VERSIÓN DESKTOP: Menú fijo tradicional permanente en pantallas medianas/grandes */}
       <Box 
         component="nav" 
         sx={{ 
@@ -446,7 +395,7 @@ function DashboardLayout() {
         {menuContent}
       </Box>
 
-      {/* ================= PANEL CENTRAL (CONTENIDO DINÁMICO) ================= */}
+      {/* ================= PANEL CENTRAL ================= */}
       <Box 
         component="main" 
         sx={{ 
@@ -455,122 +404,19 @@ function DashboardLayout() {
           pt: "88px", 
           minHeight: "100vh",
           overflowX: "hidden",
-          width: { md: `calc(100% - ${drawerWidth}px)` }, // Se adapta dinámicamente en desktop
+          width: { md: `calc(100% - ${drawerWidth}px)` }, 
           bgcolor: isDarkMode ? "#0b0e11" : "#f8fafc"
         }}
       >
         <Outlet />
       </Box>
 
-      {/* ================= MODAL FLOTANTE: GESTIÓN DE EFECTIVO ================= */}
-      <Modal
-        open={openCashModal}
-        onClose={handleCloseModal}
-        closeAfterTransition
-        sx={{ display: "flex", alignItems: "center", justifyContent: "center", p: 2 }}
-      >
-        <Card sx={{ backgroundColor: isDarkMode ? "#15181e" : "#ffffff", borderRadius: 3, border: isDarkMode ? "1px solid #1c2025" : "1px solid #e2e8f0", maxWidth: 450, width: "100%", boxShadow: 24 }}>
-          <CardContent sx={{ p: 4 }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-              <Typography variant="h6" fontWeight={800} color={isDarkMode ? "white" : "#0f172a"}>
-                Movimiento de Fondos
-              </Typography>
-              <IconButton onClick={handleCloseModal} sx={{ color: isDarkMode ? "#9ca3af" : "#475569", "&:hover": { color: isDarkMode ? "white" : "#0f172a" } }}>
-                <CloseIcon />
-              </IconButton>
-            </Stack>
-
-            <Typography color={isDarkMode ? "gray" : "#64748b"} variant="body2" sx={{ mb: 3 }}>
-              Ingresá el monto para inyectar o retirar efectivo del saldo disponible de tu cuenta.
-            </Typography>
-
-            {message && (
-              <Alert 
-                severity={message.type} 
-                variant="filled"
-                sx={{ 
-                  mb: 3,
-                  borderRadius: 1.5,
-                  bgcolor: message.type === "error" ? "#2a1215" : "#112a14", 
-                  color: message.type === "error" ? "#ff8a80" : "#a5d6a7",
-                }}
-              >
-                {message.text}
-              </Alert>
-            )}
-
-            <Stack spacing={3}>
-              <TextField
-                label="Monto a transaccionar"
-                type="number"
-                variant="outlined"
-                fullWidth
-                autoFocus
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                disabled={cashLoading}
-                placeholder="0.00"
-                slotProps={{
-                  inputLabel: { style: { color: isDarkMode ? "#9ca3af" : "#64748b" } },
-                  htmlInput: { min: "0", step: "any", style: { color: isDarkMode ? "white" : "#0f172a", fontWeight: 600 } },
-                  input: {
-                    startAdornment: <InputAdornment position="start" sx={{ "& .MuiTypography-root": { color: "#4caf50", fontWeight: 700 } }}>$</InputAdornment>,
-                  }
-                }}
-               sx={{
-                      "& .MuiOutlinedInput-root": {
-                        backgroundColor: isDarkMode ? "#0b0e11" : "#f1f5f9",
-                        "& fieldset": { borderColor: isDarkMode ? "#2d3748" : "#cbd5e1" },
-                        "&:hover fieldset": { borderColor: "#4caf50" },
-                        "&.Mui-focused fieldset": { borderColor: "#4caf50" }
-                      }
-                    }}
-                />
-
-              <Stack direction="row" spacing={2}>
-                <Button
-                  variant="contained"
-                  fullWidth
-                  disabled={cashLoading}
-                  startIcon={<ArrowUpward />}
-                  onClick={() => handleCashAction("DEPOSIT")}
-                  sx={{
-                    bgcolor: "rgba(76, 175, 80, 0.15)",
-                    color: "#4caf50",
-                    fontWeight: 700,
-                    py: 1.5,
-                    textTransform: "none",
-                    borderRadius: 1.5,
-                    "&:hover": { bgcolor: "rgba(76, 175, 80, 0.25)" }
-                  }}
-                >
-                  Ingresar
-                </Button>
-
-                <Button
-                  variant="contained"
-                  fullWidth
-                  disabled={cashLoading}
-                  startIcon={<ArrowDownward />}
-                  onClick={() => handleCashAction("WITHDRAW")}
-                  sx={{
-                    bgcolor: "rgba(244, 67, 64, 0.15)",
-                    color: "#f44336",
-                    fontWeight: 700,
-                    py: 1.5,
-                    textTransform: "none",
-                    borderRadius: 1.5,
-                    "&:hover": { bgcolor: "rgba(244, 67, 54, 0.25)" }
-                  }}
-                >
-                  Retirar
-                </Button>
-              </Stack>
-            </Stack>
-
-          </CardContent>
-        </Card>
-      </Modal>
+      {/* ================= MODAL GRANDE DE CAJA (ESTILO PPI/BIND) ================= */}
+      <CashDialog 
+        open={openCashModal} 
+        onClose={() => setOpenCashModal(false)} 
+        onSuccess={() => window.location.reload()} 
+      />
 
     </Box>
   );
