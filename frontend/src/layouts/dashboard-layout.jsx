@@ -149,8 +149,8 @@ function DashboardLayout() {
             <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#2196f3" }} />
             <ListItemText primary="Panel de Cotizaciones" slotProps={{ primary: { fontSize: "0.85rem" } }} />
           </ListItemButton>
-          <ListItemButton sx={{ py: 0.6 }}>
-            <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "gray" }} />
+          <ListItemButton onClick={() => { navigate("/markets/technical-analysis"); setMobileOpen(false); }} sx={{ py: 0.6 }}>
+            <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#2196f3" }} />
             <ListItemText primary="Análisis Técnico" slotProps={{ primary: { fontSize: "0.85rem" } }} />
           </ListItemButton>
           <ListItemButton onClick={() => { navigate("/markets/favorites"); setMobileOpen(false); }} sx={{ py: 0.6 }}>
@@ -179,9 +179,9 @@ function DashboardLayout() {
             <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#9c27b0" }} />
             <ListItemText primary="Historial de Órdenes" slotProps={{ primary: { fontSize: "0.85rem" } }} />
           </ListItemButton>
-          <ListItemButton sx={{ py: 0.6 }}>
-            <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "gray" }} />
-            <ListItemText primary="Dividendos Cobrados" slotProps={{ primary: { fontSize: "0.85rem" } }} />
+          <ListItemButton onClick={() => { navigate("/portfolio/wealth-projection"); setMobileOpen(false); }} sx={{ py: 0.6 }}>
+            <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#9c27b0" }} />
+            <ListItemText primary="Proyección de Interés Compuesto" slotProps={{ primary: { fontSize: "0.85rem" } }} />
           </ListItemButton>
         </List>
       </Collapse>
@@ -197,28 +197,34 @@ function DashboardLayout() {
 
       <Collapse in={openTrading} timeout="auto" unmountOnExit>
         <List component="div" disablePadding sx={{ pl: 3.5 }}>
-          <ListItemButton onClick={() => { navigate("/trading"); setMobileOpen(false); }} sx={{ py: 0.6 }}>
+          {/* Operar Activos */}
+          <ListItemButton 
+            onClick={() => { navigate("/trading"); setMobileOpen(false); }} 
+            sx={{ py: 0.6 }}
+          >
             <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#ff9800" }} />
-            <ListItemText primary="Operar Acciones / CEDEARs" slotProps={{ primary: { fontSize: "0.85rem" } }} />
+            <ListItemText primary="Operar Activos" slotProps={{ primary: { fontSize: "0.85rem" } }} />
           </ListItemButton>
-          <ListItemButton sx={{ py: 0.6 }}>
-            <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "gray" }} />
-            <ListItemText primary="Compra de Dólar MEP" slotProps={{ primary: { fontSize: "0.85rem" } }} />
+
+          {/* Cauciones & Tasa Fija */}
+          <ListItemButton 
+            onClick={() => { navigate("/trading/cautions"); setMobileOpen(false); }} 
+            sx={{ py: 0.6 }}
+          >
+            <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#ff9800" }} />
+            <ListItemText primary="Cauciones & Tasa Fija" slotProps={{ primary: { fontSize: "0.85rem" } }} />
           </ListItemButton>
-          <ListItemButton sx={{ py: 0.6 }}>
-            <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "gray" }} />
-            <ListItemText primary="Órdenes Pendientes" slotProps={{ primary: { fontSize: "0.85rem" } }} />
+
+          {/* Órdenes Automáticas y Alertas */}
+          <ListItemButton 
+            onClick={() => { navigate("/trading/stop-loss-alerts"); setMobileOpen(false); }} 
+            sx={{ py: 0.6 }}
+          >
+            <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#ff9800" }} />
+            <ListItemText primary="Stop-Loss & Alertas" slotProps={{ primary: { fontSize: "0.85rem" } }} />
           </ListItemButton>
         </List>
       </Collapse>
-
-      {/* 5. SETTINGS */}
-      <ListItemButton onClick={() => { navigate("/settings"); setMobileOpen(false); }} sx={{ mt: 2 }}>
-        <ListItemIcon sx={iconContainerStyle("rgba(144, 164, 174, 0.2)")}>
-          <Settings sx={{ color: "#90a4ae", fontSize: 18 }} />
-        </ListItemIcon>
-        <ListItemText primary="Settings" slotProps={{ primary: { fontSize: "0.9rem", fontWeight: 600 } }} />
-      </ListItemButton>
     </List>
   );
 

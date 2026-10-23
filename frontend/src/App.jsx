@@ -17,6 +17,11 @@ import HistoryPage from "./pages/history-page";
 import InvestorProfilePage from "./pages/investor-profile-page"; 
 import Reports from "./pages/reports"; 
 import FavoritesPage from "./pages/favorites-page";
+import TechnicalAnalysisPage from "./pages/technical-analysis-page";
+import WealthProjectionPage from "./pages/wealth-projection-page";
+import CautionsPage from "./pages/cautions-page";
+import StopLossAlertsPage from "./pages/stop-loss-alerts-page";
+
 
 function App() {
   return (
@@ -112,6 +117,27 @@ function App() {
             element={<FavoritesPage />} 
           />
         
+          <Route 
+            path="markets/technical-analysis" 
+            element={<TechnicalAnalysisPage />} 
+          />
+
+          <Route 
+            path="portfolio/wealth-projection" 
+            element={<WealthProjectionPage />} 
+          />
+
+          <Route 
+            path="trading/cautions" 
+            element={<CautionsPage />} 
+          />
+
+          <Route 
+            path="trading/stop-loss-alerts" 
+            element={<StopLossAlertsPage />} 
+          />
+
+
         </Route>
       </Routes>
     </BrowserRouter>
