@@ -17,14 +17,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ==============================================================================
 # Evitamos excepciones si decouple no encuentra archivos .env en producción
 try:
-    SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', config('SECRET_KEY', default='dev-fallback-key'))
+    SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', config('SECRET_KEY', default='django-dev-fallback-secret-key-32-chars-minimum'))
     DEBUG = os.environ.get('DJANGO_DEBUG', str(config('DEBUG', default=True, cast=bool))) == 'True'
-    JWT_SECRET = os.environ.get('JWT_SECRET_KEY', config('JWT_SECRET_KEY', default=SECRET_KEY))
+    JWT_SECRET = os.environ.get('JWT_SECRET_KEY', config('JWT_SECRET_KEY', default='jwt-dev-fallback-secret-key-32-chars-minimum'))
 except Exception:
     # Fallback extremo para producción si decouple arroja un error crítico de inicialización
-    SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'produccion-segura-fallback-key')
+    SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-prod-fallback-secret-key-32-chars-minimum')
     DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
-    JWT_SECRET = os.environ.get('JWT_SECRET_KEY', SECRET_KEY)
+    JWT_SECRET = os.environ.get('JWT_SECRET_KEY', 'jwt-prod-fallback-secret-key-32-chars-minimum')
 
 # Ajuste ultra-seguro de ALLOWED_HOSTS para Producción
 raw_hosts = os.environ.get('DJANGO_ALLOWED_HOSTS', 'api.app4.academia.ar,localhost,127.0.0.1')
@@ -137,11 +137,11 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.IsAuthenticated',
     ),
 }
 
-# Corregido: Agregamos firma dinámica usando una clave JWT dedicada para encriptar contraseñas/tokens
+# Clave JWT dedicada para encriptar contraseñas/tokens
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Box, Typography, Paper, Grid, CircularProgress, Alert, Stack, Divider, Chip } from "@mui/material";
-import { getAssetComposition } from "../services/portfolio-service";
+import { getAssetComposition, getPortfolioNews } from "../services/portfolio-service";
 import PortfolioPieChart from "../components/dashboard/portfolio-pie-chart";
 import NewspaperIcon from "@mui/icons-material/Newspaper";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
@@ -51,15 +51,8 @@ function CompositionPage() {
     queryKey: ["portfolioNews"],
     queryFn: async () => {
       try {
-        const API_BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
-        const cleanBase = API_BASE.endsWith("/api") ? API_BASE : `${API_BASE}/api`;
-        
-        const response = await fetch(`${cleanBase}/portfolio/news/`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("access")}` }
-        });
-        if (!response.ok) throw new Error("Fallback news active");
-        const json = await response.json();
-        return json?.news && json.news.length > 0 ? json.news : FALLBACK_NEWS;
+        const news = await getPortfolioNews();
+        return news && news.length > 0 ? news : FALLBACK_NEWS;
       } catch (e) {
         return FALLBACK_NEWS;
       }

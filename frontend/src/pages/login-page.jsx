@@ -3,34 +3,30 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, TextField, Button, Typography, Stack, InputAdornment, IconButton, Card, Alert } from "@mui/material";
 import { Visibility, VisibilityOff, TrendingUp as LogoIcon } from "@mui/icons-material";
-import { loginUser } from "../services/auth-service"; // IMPORTACIÓN CLAVE: Conectamos tu servicio de autenticación
+import { loginUser } from "../services/auth-service";
 
 function LoginPage() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ username: "", password: "" });
-  const [errorMsg, setErrorMsg] = useState(""); // Para mostrar si el usuario/clave están mal
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // FUNCIÓN CORREGIDA: Ahora es asíncrona e impacta contra Django
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMsg(""); // Limpiamos errores previos
+    setErrorMsg("");
     
     try {
       console.log("Enviando credenciales a Django...");
       const data = await loginUser(formData.username, formData.password);
       
-      // CAPTURA EXITOSA: Django devuelve { access: "...", refresh: "..." }
       if (data && data.access) {
         localStorage.setItem("access", data.access);
         localStorage.setItem("refresh", data.refresh);
-        
-        console.log("¡Token JWT real almacenado con éxito!");
-        navigate("/"); // Nos vamos al Dashboard
+        navigate("/");
       } else {
         setErrorMsg("El servidor no devolvió los tokens esperados.");
       }
@@ -42,8 +38,7 @@ function LoginPage() {
 
   return (
     <Box sx={{ display: "flex", height: "100vh", width: "100vw", overflow: "hidden", bgcolor: "#0b0e11" }}>
-      
-      {/* ================= SECCIÓN IZQUIERDA: BRANDING Y DISEÑO AMPLIADO ================= */}
+      {/* SECCIÓN IZQUIERDA: BRANDING */}
       <Box
         sx={{
           flex: 1,
@@ -77,8 +72,6 @@ function LoginPage() {
         }}
       >
         <Stack spacing={4} sx={{ zIndex: 3, color: "white", maxWidth: "850px", width: "100%", pr: { md: 4 } }}>
-          
-          {/* Contenedor de Marca Animado al Entrar */}
           <Stack 
             direction="row" 
             alignItems="center" 
@@ -91,7 +84,6 @@ function LoginPage() {
               }
             }}
           >
-            {/* LOGO CON FLOTE CORREGIDO */}
             <Box 
               sx={{ 
                 display: "inline-flex",
@@ -129,7 +121,7 @@ function LoginPage() {
         </Stack>
       </Box>
 
-      {/* ================= SECCIÓN DERECHA: LOGEO FIJO E INDEPENDIENTE ================= */}
+      {/* SECCIÓN DERECHA: LOGEO */}
       <Box
         sx={{
           width: { xs: "100%", md: "480px" },
@@ -154,7 +146,6 @@ function LoginPage() {
             <Typography variant="body2" color="gray">¡Hola! Ingresá tus credenciales para acceder al broker.</Typography>
           </Stack>
 
-          {/* Alerta de Error en pantalla si las credenciales fallan */}
           {errorMsg && (
             <Alert severity="error" sx={{ mb: 3, bgcolor: "#2a1215", color: "#ff8a80", "& .MuiAlert-icon": { color: "#ff5252" } }}>
               {errorMsg}
@@ -240,7 +231,7 @@ function LoginPage() {
 
           <Typography variant="body2" color="gray" align="center" sx={{ mt: 4 }}>
             ¿Sos nuevo?{" "}
-            <Box component="span" sx={{ color: "#4caf50", cursor: "pointer", fontWeight: 600, "&:hover": { textDecoration: "underline" } }}>
+            <Box component="span" onClick={() => navigate("/register")} sx={{ color: "#4caf50", cursor: "pointer", fontWeight: 600, "&:hover": { textDecoration: "underline" } }}>
               Crear una cuenta
             </Box>
           </Typography>

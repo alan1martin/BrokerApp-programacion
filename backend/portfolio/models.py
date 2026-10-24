@@ -23,6 +23,11 @@ class Position(models.Model):
     quantity = models.DecimalField(max_digits=15, decimal_places=6, default=0.00)
     average_price = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['portfolio', 'symbol'], name='unique_portfolio_position')
+        ]
+
     def __str__(self):
         return f"{self.symbol} - {self.quantity} para {self.portfolio.user.username}"
 
@@ -30,10 +35,10 @@ class Position(models.Model):
 # --- 3. MODELO TRANSACTION ---
 class Transaction(models.Model):
     TRANSACTION_TYPES = [
-    ('BUY', 'Compra'),
-    ('SELL', 'Venta'),
-    ('DEP', 'Depósito'),
-    ('WIT', 'Retiro'),
+        ('BUY', 'Compra'),
+        ('SELL', 'Venta'),
+        ('DEP', 'Depósito'),
+        ('WIT', 'Retiro'),
     ]
 
     portfolio = models.ForeignKey(Portfolio, on_delete=models.CASCADE, related_name="transactions")
@@ -45,4 +50,18 @@ class Transaction(models.Model):
 
     def __str__(self):
         return f"{self.transaction_type} {self.quantity} {self.symbol} a ${self.price} ({self.portfolio.user.username})"
-    
+
+
+# --- 4. MODELO FAVORITE ---
+class Favorite(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="favorites")
+    symbol = models.CharField(max_length=10)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'symbol'], name='unique_user_favorite')
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.symbol}"

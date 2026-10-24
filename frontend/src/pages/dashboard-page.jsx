@@ -1,4 +1,4 @@
-//frontend/src/pages/dashboard-page.jsx
+// frontend/src/pages/dashboard-page.jsx
 import { Grid, Typography, Stack, Card, CardContent, Box, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useMarket } from "../context/market-context.jsx";
@@ -8,6 +8,21 @@ import PortfolioValueChart from "../components/dashboard/portfolio-value-chart";
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import { getAssetLogo } from "../utils/get-logo";
+
+const formatTxType = (type) => {
+  switch (type) {
+    case "BUY":
+      return { label: "COMPRA", color: "error.main" }; // Salida de efectivo
+    case "SELL":
+      return { label: "VENTA", color: "success.main" }; // Ingreso de efectivo
+    case "DEP":
+      return { label: "DEPÓSITO", color: "success.main" }; // Ingreso de caja
+    case "WIT":
+      return { label: "RETIRO", color: "warning.main" }; // Salida de caja
+    default:
+      return { label: type || "OPERACIÓN", color: "gray" };
+  }
+};
 
 function DashboardPage() {
   const { assets, loadingMarket } = useMarket();
@@ -107,7 +122,7 @@ function DashboardPage() {
     <Stack spacing={4}>
       <Typography variant="h4" fontWeight={600}>Estado de cuenta</Typography>
 
-      {/* FILA 1: Métricas Principales (RESTAURADA A TU DISEÑO ORIGINAL) */}
+      {/* FILA 1: Métricas Principales */}
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 4 }}>
           <Card sx={{ backgroundColor: "#15181e" }}>
@@ -158,7 +173,7 @@ function DashboardPage() {
         </Grid>
       </Grid>
 
-      {/* FILA 2: Gráficos (RESTAURADA A TU DISEÑO ORIGINAL) */}
+      {/* FILA 2: Gráficos */}
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 7 }}>
           <Card sx={{ backgroundColor: "#15181e", p: 2, height: "100%", minHeight: 380 }}>
@@ -197,28 +212,33 @@ function DashboardPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                historyArray.slice(0, 5).map((tx, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell sx={{ color: "gray" }}>{new Date(tx.timestamp || tx.date).toLocaleDateString()}</TableCell>
-                    <TableCell sx={{ color: "white" }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <Avatar 
-                          src={getAssetLogo(tx.symbol)} 
-                          alt={tx.symbol}
-                          sx={{ width: 26, height: 26, backgroundColor: "#1c2025", border: "1px solid #2d3748", p: 0.2 }} 
-                        />
-                        <Typography variant="body2" fontWeight={600}>{tx.symbol}</Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 700, color: tx.transaction_type === "BUY" ? "success.main" : "error.main" }}>
-                      {tx.transaction_type === "BUY" ? "COMPRA" : "VENTA"}
-                    </TableCell>
-                    <TableCell align="right" sx={{ color: "white" }}>{parseFloat(tx.quantity).toFixed(2)}</TableCell>
-                    <TableCell align="right" sx={{ color: "white", fontWeight: 600 }}>
-                      ${parseFloat(tx.price).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                    </TableCell>
-                  </TableRow>
-                ))
+                historyArray.slice(0, 5).map((tx, idx) => {
+                  const txType = formatTxType(tx.transaction_type);
+                  return (
+                    <TableRow key={idx}>
+                      <TableCell sx={{ color: "gray" }}>{new Date(tx.timestamp || tx.date).toLocaleDateString()}</TableCell>
+                      <TableCell sx={{ color: "white" }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <Avatar 
+                            src={getAssetLogo(tx.symbol)} 
+                            alt={tx.symbol}
+                            sx={{ width: 26, height: 26, backgroundColor: "#1c2025", border: "1px solid #2d3748", p: 0.2 }} 
+                          />
+                          <Typography variant="body2" fontWeight={600}>{tx.symbol}</Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: txType.color }}>
+                        {txType.label}
+                      </TableCell>
+                      <TableCell align="right" sx={{ color: "white" }}>
+                        {tx.symbol === "CASH" ? "-" : parseFloat(tx.quantity).toFixed(2)}
+                      </TableCell>
+                      <TableCell align="right" sx={{ color: "white", fontWeight: 600 }}>
+                        ${parseFloat(tx.price).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>

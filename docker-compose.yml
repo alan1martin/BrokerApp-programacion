@@ -1,4 +1,3 @@
-
 services:
   # ================= SERVICIO DE LA BASE DE DATOS (POSTGRESQL) =================
   db:
@@ -32,8 +31,14 @@ services:
       - VIRTUAL_PORT=8000
       - LETSENCRYPT_HOST=api.app4.academia.ar
       - LETSENCRYPT_EMAIL=admin@academia.ar
-      - DJANGO_ALLOWED_HOSTS=api.app4.academia.ar,localhost,127.0.0.1
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-api.app4.academia.ar,localhost,127.0.0.1}
       - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-${SECRET_KEY}}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-${DJANGO_SECRET_KEY:-${SECRET_KEY}}}
+      - DJANGO_DEBUG=${DJANGO_DEBUG:-False}
+      - DJANGO_SUPERUSER_USERNAME=${DJANGO_SUPERUSER_USERNAME}
+      - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD}
+      - DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL:-admin@academia.ar}
     networks:
       - nginx-proxy
     deploy:

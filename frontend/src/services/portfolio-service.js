@@ -26,7 +26,9 @@ export const executeTrade = async (tradeData) => {
   } catch (error) {
     console.error("Error en executeTrade service:", error.response?.data || error.message);
     const errorMsg = error.response?.data?.error || "Error al procesar la transacción.";
-    throw new Error(errorMsg);
+    const err = new Error(errorMsg);
+    err.response = error.response;
+    throw err;
   }
 };
 
@@ -40,7 +42,9 @@ export const resetAccount = async () => {
     return response.data;
   } catch (error) {
     console.error("Error en resetAccount service:", error.response?.data || error.message);
-    throw new Error("No se pudo resetear la cuenta.");
+    const err = new Error("No se pudo resetear la cuenta.");
+    err.response = error.response;
+    throw err;
   }
 };
 
@@ -72,7 +76,9 @@ export const manageCashFunds = async (transactionType, amount) => {
   } catch (error) {
     console.error("Error en manageCashFunds service:", error.response?.data || error.message);
     const errorMsg = error.response?.data?.error || "Error al procesar los fondos.";
-    throw new Error(errorMsg);
+    const err = new Error(errorMsg);
+    err.response = error.response;
+    throw err;
   }
 };
 
@@ -105,15 +111,15 @@ export const getMarketQuotes = async () => {
 };
 
 /**
- * 8. OBTENER RENDIMIENTO POR ACTIVO (Para la pantalla de Informes)
- * /api/portfolio/performance/
+ * 8. OBTENER NOTICIAS DEL PORTFOLIO
+ * /api/portfolio/news/
  */
-export const getAssetPerformance = async () => {
+export const getPortfolioNews = async () => {
   try {
-    const response = await api.get("portfolio/performance/");
-    return response.data;
+    const response = await api.get('portfolio/news/');
+    return response.data?.news || [];
   } catch (error) {
-    console.error("Error en getAssetPerformance service:", error.response?.data || error.message);
+    console.error('Error en getPortfolioNews service:', error);
     throw error;
   }
 };

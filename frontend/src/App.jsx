@@ -12,6 +12,7 @@ import CompositionPage from "./pages/composition-page";
 import MarketsPage from "./pages/markets-page";
 import SettingsPage from "./pages/settings-page";
 import LoginPage from "./pages/login-page";
+import RegisterPage from "./pages/register-page";
 import TradingPage from "./pages/trading-page"; 
 import HistoryPage from "./pages/history-page";
 import InvestorProfilePage from "./pages/investor-profile-page"; 
@@ -27,10 +28,14 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* LOGIN */}
+        {/* AUTENTICACIÓN PÚBLICA */}
         <Route
           path="/login"
           element={<LoginPage />}
+        />
+        <Route
+          path="/register"
+          element={<RegisterPage />}
         />
 
         {/* RUTAS PROTEGIDAS */}
@@ -54,10 +59,7 @@ function App() {
             element={<CompositionPage />}
           />
 
-          {/* Ruta de Portfolio
-              Mapeamos 'portfolio' a CompositionPage para que cuando hagas clic en 
-              "Portfolio" en tu Sidebar viejo, levante también el gráfico sin romperse.
-          */}
+          {/* Alias de portfolio a CompositionPage */}
           <Route
             path="portfolio"
             element={<CompositionPage />}
@@ -80,6 +82,10 @@ function App() {
             path="settings"
             element={<SettingsPage />}
           />
+          <Route 
+            path="settings/:tab" 
+            element={<SettingsPage />} 
+          />
           
           {/* Historial de transacciones */}
           <Route
@@ -93,51 +99,35 @@ function App() {
             element={<InvestorProfilePage />}
           />
 
-          {/* NUEVA RUTA: Rendimiento e Informes */}
+          {/* Rendimiento e Informes */}
           <Route
             path="reports"
             element={<Reports />}
           />
 
-          {/* Configuración dinámica: detecta sub-secciones como /settings/profile */}
-          
-          <Route 
-            path="settings/:tab" 
-            element={<SettingsPage />} 
-          />
-          
-          <Route 
-            path="settings" 
-            element={<SettingsPage />} 
-          />
-
-          
+          {/* Mercados y Análisis */}
           <Route 
             path="markets/favorites" 
             element={<FavoritesPage />} 
           />
-        
           <Route 
             path="markets/technical-analysis" 
             element={<TechnicalAnalysisPage />} 
           />
 
+          {/* Proyecciones y Trading Avanzado */}
           <Route 
             path="portfolio/wealth-projection" 
             element={<WealthProjectionPage />} 
           />
-
           <Route 
             path="trading/cautions" 
             element={<CautionsPage />} 
           />
-
           <Route 
             path="trading/stop-loss-alerts" 
             element={<StopLossAlertsPage />} 
           />
-
-
         </Route>
       </Routes>
     </BrowserRouter>

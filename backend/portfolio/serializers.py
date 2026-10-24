@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.contrib.auth.models import User
 from .models import Portfolio, Position, Transaction
 
 class PositionSerializer(serializers.ModelSerializer):
@@ -25,7 +26,7 @@ class PortfolioSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Portfolio
-        fields = ['id', 'total_value', 'cash', 'positions'] # 🟢 Incluido 'cash' en la salida
+        fields = ['id', 'total_value', 'cash', 'positions']
 
 
 class TransactionSerializer(serializers.ModelSerializer):
@@ -33,3 +34,30 @@ class TransactionSerializer(serializers.ModelSerializer):
         model = Transaction
         fields = ['id', 'symbol', 'transaction_type', 'quantity', 'price', 'timestamp']
         read_only_fields = ['id', 'timestamp']
+
+
+class RegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True, min_length=6)
+    password_confirm = serializers.CharField(write_only=True, required=True)
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'password', 'password_confirm']
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password_confirm']:
+            raise serializers.ValidationError({"password_confirm": "Las contraseñas no coinciden."})
+        return attrs
+
+    def create(self, validated_data):
+        validated_data.pop('password_confirm')
+        user = User.objects.create_user(
+            username=validated_data['username'],
+            email=validated_data.get('email', ''),
+            password=validated_data['password']
+        )
+        Portfolio.objects.get_or_create(
+            user=user,
+            defaults={'cash_balance': 10000.00, 'total_value': 10000.00}
+        )
+        return user
