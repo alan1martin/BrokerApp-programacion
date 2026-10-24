@@ -6,11 +6,12 @@ from decimal import Decimal
 import yfinance as yf
 
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.http import JsonResponse
 
-from .models import Portfolio, Position, Transaction
-from .serializers import PortfolioSerializer, TransactionSerializer
+from .models import Portfolio, Position, Transaction, Favorite
+from .serializers import PortfolioSerializer, TransactionSerializer, RegisterSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -413,3 +414,44 @@ def get_portfolio_news(request):
     except Exception as e:
         print(f"Error crítico en get_portfolio_news: {str(e)}")
         return Response({"error": f"Error interno: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# ================= FAVORITOS =================
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_favorites(request):
+    favorites = Favorite.objects.filter(user=request.user).values_list('symbol', flat=True)
+    return Response(list(favorites), status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def toggle_favorite(request):
+    symbol = request.data.get('symbol')
+    if not symbol:
+        return Response({'error': 'Símbolo requerido.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    symbol = str(symbol).strip().upper()
+    fav = Favorite.objects.filter(user=request.user, symbol=symbol).first()
+    if fav:
+        fav.delete()
+        return Response({'symbol': symbol, 'is_favorite': False, 'message': f'{symbol} eliminado de favoritos.'}, status=status.HTTP_200_OK)
+    else:
+        Favorite.objects.create(user=request.user, symbol=symbol)
+        return Response({'symbol': symbol, 'is_favorite': True, 'message': f'{symbol} agregado a favoritos.'}, status=status.HTTP_201_CREATED)
+
+
+# ================= REGISTRO DE USUARIOS =================
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register_user(request):
+    serializer = RegisterSerializer(data=request.data)
+    if serializer.is_valid():
+        user = serializer.save()
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'message': 'Usuario registrado con éxito.',
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'username': user.username
+        }, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -1,3 +1,4 @@
+// frontend/src/pages/trading-page.jsx
 import { Grid, Typography, Card, CardContent, TextField, Button, Stack, Tabs, Tab, Box, MenuItem, Alert, CircularProgress } from "@mui/material";
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom"; 
@@ -37,7 +38,7 @@ function TradingPage() {
     setStatusMessage(null); 
   };
 
-  // MOTOR DE SIMULACIÓN LOCAL AUXILIAR
+  // MOTOR DE SIMULACIÓN LOCAL AUXILIAR (Modo Contingencia si el servidor está caído)
   const executeLocalSimulatedTrade = (tradeData) => {
     const localPortfolio = JSON.parse(localStorage.getItem("simulated_portfolio")) || { cash: 5000, total_value: 5000, positions: [] };
     const localHistory = JSON.parse(localStorage.getItem("simulated_history")) || [];
@@ -45,7 +46,7 @@ function TradingPage() {
     const cost = tradeData.quantity * tradeData.price;
 
     if (tradeData.transaction_type === "BUY") {
-      if (localPortfolio.cash < cost) throw new Error("Fondos simulados insuficientes para realizar la compra.");
+      if (localPortfolio.cash < cost) throw new Error("Fondos insuficientes para realizar la compra.");
       localPortfolio.cash -= cost;
 
       const existingPos = localPortfolio.positions.find(p => p.symbol === tradeData.symbol);
@@ -100,17 +101,23 @@ function TradingPage() {
     try {
       // Intentamos pegarle a Django primero
       const response = await executeTrade(tradeData);
-      setStatusMessage({ type: "success", text: response.message || "Operación procesada en backend." });
+      setStatusMessage({ type: "success", text: response.message || "Operación procesada con éxito." });
       setQuantity(""); 
     } catch (error) {
-      console.warn("Backend inalcanzable o 401. Derivando transacción a simulación local...");
-      
+      // Si el backend respondió con un error de validación (saldo insuficiente, etc., 4xx)
+      if (error.response && error.response.status >= 400 && error.response.status < 500) {
+        const errorMsg = error.response.data?.error || error.response.data?.detail || error.message || "Error en los datos de la orden.";
+        setStatusMessage({ type: "error", text: errorMsg });
+        return; // 🛑 Cortamos acá para NO ejecutar el fallback local simulado si el backend la rechazó
+      }
+
+      // En caso de que el backend no responda o sea un error de red (5xx o caída de servidor)
+      console.warn("Backend inalcanzable. Derivando a simulación local de contingencia...");
       try {
-        // Si Django falla, se ejecuta local de inmediato sin romper la pantalla
         executeLocalSimulatedTrade(tradeData);
         setStatusMessage({
-          type: "success",
-          text: `[Modo Simulación] ¡Orden de ${action === 0 ? 'Compra' : 'Venta'} completada con éxito localmente!`
+          type: "warning",
+          text: `[Sin conexión con servidor] Orden de ${action === 0 ? 'Compra' : 'Venta'} guardada localmente.`
         });
         setQuantity("");
       } catch (simError) {

@@ -2,10 +2,20 @@
 import api from "./api";
 
 export async function loginUser(username, password) {
-  // Como 'api' ahora tiene la baseURL con "/api", solo le concatenamos "/token/"
-  const response = await api.post("/token/", {
+  const response = await api.post("token/", {
     username,
     password,
+  });
+
+  return response.data;
+}
+
+export async function registerUser({ username, email, password, password_confirm }) {
+  const response = await api.post("register/", {
+    username,
+    email,
+    password,
+    password_confirm,
   });
 
   return response.data;

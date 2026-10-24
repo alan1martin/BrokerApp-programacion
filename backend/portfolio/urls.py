@@ -1,4 +1,4 @@
-#backend/portfolio/urls.py
+# backend/portfolio/urls.py
 from django.urls import path
 from .views import ( 
     PortfolioDetailView, 
@@ -9,7 +9,10 @@ from .views import (
     DepositWithdrawCashView, 
     AssetCompositionView, 
     MarketQuotesView, 
-    get_portfolio_news )
+    get_portfolio_news,
+    get_favorites,
+    toggle_favorite,
+)
 
 urlpatterns = [
     path('', PortfolioDetailView.as_view(), name='portfolio-detail'),
@@ -20,5 +23,7 @@ urlpatterns = [
     path('cash/', DepositWithdrawCashView.as_view(), name='deposit-withdraw-cash'),
     path('composition/', AssetCompositionView.as_view(), name='asset-composition'),
     path('market-quotes/', MarketQuotesView.as_view(), name='market-quotes'),
-    path('news/', get_portfolio_news, name='portfolio-news')
+    path('news/', get_portfolio_news, name='portfolio-news'),
+    path('favorites/', get_favorites, name='portfolio-favorites'),
+    path('favorites/toggle/', toggle_favorite, name='portfolio-favorites-toggle'),
 ]

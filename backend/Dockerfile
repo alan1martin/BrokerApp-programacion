@@ -25,6 +25,5 @@ COPY . /app/
 # 7. Expone el puerto 8000 que usa Django
 EXPOSE 8000
 
-# 8. Comando de producción: ejecuta migraciones y levanta con Gunicorn usando la carpeta config
-# Migra, crea superusuario automáticamente si no existe y levanta Gunicorn
-CMD ["sh", "-c", "python manage.py migrate --noinput && DJANGO_SUPERUSER_PASSWORD=admin1234 python manage.py createsuperuser --noinput --username admin --email admin@academia.ar || true && gunicorn config.wsgi:application --bind 0.0.0.0:8000"]
+# 8. Comando de producción: ejecuta migraciones, crea superusuario (si se proveen variables) y levanta Gunicorn
+CMD ["sh", "-c", "python manage.py migrate --noinput && (if [ -n \"$DJANGO_SUPERUSER_USERNAME\" ] && [ -n \"$DJANGO_SUPERUSER_PASSWORD\" ]; then python manage.py createsuperuser --noinput --username \"$DJANGO_SUPERUSER_USERNAME\" --email \"${DJANGO_SUPERUSER_EMAIL:-admin@academia.ar}\" || true; fi) && gunicorn config.wsgi:application --bind 0.0.0.0:8000"]
