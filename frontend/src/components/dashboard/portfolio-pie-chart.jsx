@@ -1,9 +1,7 @@
 import { ResponsivePie } from '@nivo/pie';
-import { Box, Typography, useTheme } from '@mui/material';
+import { Box } from '@mui/material';
 
 function PortfolioPieChart({ data }) {
-  const theme = useTheme();
-
   return (
     <Box sx={{ height: 300, width: '100%', position: 'relative' }}>
       <ResponsivePie
@@ -29,16 +27,6 @@ function PortfolioPieChart({ data }) {
           }
         }}
       />
-    {/* Texto en el centro del hueco (Donut)
-      <Box sx={{
-        position: 'absolute',
-        top: '50%', // 🎯 Ajustado a 50% exacto para que quede perfectamente centrado al estar solo
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        textAlign: 'center'
-      }}>
-        <Typography variant="h6" fontWeight={700} color="white">Activos</Typography>
-      </Box> */}
     </Box>
   );
 }

@@ -16,6 +16,8 @@ import {
 } from "@mui/material";
 // REEMPLAZO: Importamos tu instancia configurada en lugar de Axios plano
 import api from "../services/api"; 
+import HistoryIcon from "@mui/icons-material/History";
+import PageHeader from "../components/layout/page-header"; 
 
 // Función que le pega a tu endpoint usando el baseURL dinámico e interceptores
 const fetchTransactionHistory = async () => {
@@ -46,14 +48,12 @@ function HistoryPage() {
 
   return (
     <Box sx={{ p: 4, bgcolor: "#0b0e11", minHeight: "100vh", color: "white" }}>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight={800} gutterBottom>
-          Historial de Órdenes
-        </Typography>
-        <Typography variant="body2" color="gray">
-          Registro completo de tus operaciones de mercado y movimientos de fondos.
-        </Typography>
-      </Box>
+      <PageHeader
+        icon={HistoryIcon}
+        title="Historial de Órdenes"
+        subtitle="Registro completo de tus operaciones de mercado y movimientos de fondos."
+        iconColor="#2196f3"
+      />
 
       {/* ESTADO DE CARGA */}
       {isLoading && (

@@ -3,6 +3,7 @@ import {
   BrowserRouter,
   Routes,
   Route,
+  Navigate
 } from "react-router-dom";
 
 import ProtectedRoute from "./components/auth/protected-route";
@@ -38,7 +39,7 @@ function App() {
           element={<RegisterPage />}
         />
 
-        {/* RUTAS PROTEGIDAS */}
+        {/* RUTAS PROTEGIDAS DENTRO DEL LAYOUT */}
         <Route
           path="/"
           element={
@@ -53,28 +54,82 @@ function App() {
             element={<DashboardPage />}
           />
 
-          {/* Ruta de Composición de Activos (Fase 3) */}
+          {/* Rutas de Portafolio */}
           <Route
             path="composition"
             element={<CompositionPage />}
           />
-
-          {/* Alias de portfolio a CompositionPage */}
           <Route
             path="portfolio"
             element={<CompositionPage />}
           />
+          <Route
+            path="portfolio/composition"
+            element={<CompositionPage />}
+          />
+          <Route 
+            path="portfolio/projection" 
+            element={<WealthProjectionPage />} 
+          />
+          <Route 
+            path="portfolio/wealth-projection" 
+            element={<WealthProjectionPage />} 
+          />
+          <Route 
+            path="wealth-projection" 
+            element={<WealthProjectionPage />} 
+          />
 
-          {/* Ruta de Trading */}
+          {/* Rutas de Trading / Operar */}
           <Route
             path="trading"
             element={<TradingPage />}
           />
+          <Route
+            path="trading/trade"
+            element={<TradingPage />}
+          />
+          <Route 
+            path="trading/cautions" 
+            element={<CautionsPage />} 
+          />
+          <Route 
+            path="cautions" 
+            element={<CautionsPage />} 
+          />
+          <Route 
+            path="trading/stoploss" 
+            element={<StopLossAlertsPage />} 
+          />
+          <Route 
+            path="trading/stop-loss-alerts" 
+            element={<StopLossAlertsPage />} 
+          />
+          <Route 
+            path="stop-loss-alerts" 
+            element={<StopLossAlertsPage />} 
+          />
 
-          {/* Panel de Cotizaciones (Fase 4) */}
+          {/* Rutas de Mercados y Análisis */}
           <Route
             path="markets"
             element={<MarketsPage />}
+          />
+          <Route 
+            path="markets/favorites" 
+            element={<FavoritesPage />} 
+          />
+          <Route 
+            path="favorites" 
+            element={<FavoritesPage />} 
+          />
+          <Route 
+            path="markets/technical-analysis" 
+            element={<TechnicalAnalysisPage />} 
+          />
+          <Route 
+            path="technical-analysis" 
+            element={<TechnicalAnalysisPage />} 
           />
 
           {/* Zona de configuración */}
@@ -93,7 +148,7 @@ function App() {
             element={<HistoryPage />}
           />
 
-          {/* Perfil de Inversor (Test CNV) */}
+          {/* Perfil de Inversor */}
           <Route
             path="investor-profile"
             element={<InvestorProfilePage />}
@@ -105,30 +160,18 @@ function App() {
             element={<Reports />}
           />
 
-          {/* Mercados y Análisis */}
-          <Route 
-            path="markets/favorites" 
-            element={<FavoritesPage />} 
-          />
-          <Route 
-            path="markets/technical-analysis" 
-            element={<TechnicalAnalysisPage />} 
-          />
-
-          {/* Proyecciones y Trading Avanzado */}
-          <Route 
-            path="portfolio/wealth-projection" 
-            element={<WealthProjectionPage />} 
-          />
-          <Route 
-            path="trading/cautions" 
-            element={<CautionsPage />} 
-          />
-          <Route 
-            path="trading/stop-loss-alerts" 
-            element={<StopLossAlertsPage />} 
+          {/* Fallback de rutas desconocidas dentro de la app */}
+          <Route
+            path="*"
+            element={<Navigate to="/" replace />}
           />
         </Route>
+
+        {/* Fallback global */}
+        <Route
+          path="*"
+          element={<Navigate to="/" replace />}
+        />
       </Routes>
     </BrowserRouter>
   );

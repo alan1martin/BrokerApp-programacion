@@ -10,13 +10,20 @@ export async function loginUser(username, password) {
   return response.data;
 }
 
-export async function registerUser({ username, email, password, password_confirm }) {
+export async function registerUser({ full_name, email, dni, password, password_confirm, username }) {
   const response = await api.post("register/", {
-    username,
+    full_name,
     email,
+    dni,
     password,
     password_confirm,
+    username,
   });
 
+  return response.data;
+}
+
+export async function getCurrentUserProfile() {
+  const response = await api.get("user/me/");
   return response.data;
 }

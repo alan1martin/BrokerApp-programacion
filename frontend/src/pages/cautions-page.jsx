@@ -3,6 +3,7 @@ import { Box, Typography, Paper, Grid, Stack, TextField, Button, InputAdornment,
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import PageHeader from "../components/layout/page-header";
 
 // Tasas estimadas de mercado para cauciones
 const MARKET_RATES = [
@@ -50,17 +51,12 @@ function CautionsPage() {
   return (
     <Box sx={{ p: { xs: 2, md: 4 }, bgcolor: "#0b0e11", minHeight: "100vh", color: "white" }}>
       {/* Encabezado */}
-      <Box sx={{ mb: 4 }}>
-        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1 }}>
-          <AccessTimeIcon sx={{ color: "#ff9800", fontSize: 28 }} />
-          <Typography variant="h4" fontWeight={800}>
-            Cauciones & Tasa Fija
-          </Typography>
-        </Stack>
-        <Typography variant="body2" color="gray">
-          Hacé rendir tu efectivo no invertido con colocaciones de muy corto plazo garantizadas por el mercado.
-        </Typography>
-      </Box>
+      <PageHeader
+        icon={AccessTimeIcon}
+        title="Cauciones & Tasa Fija"
+        subtitle="Hacé rendir tu efectivo no invertido con colocaciones de muy corto plazo garantizadas por el mercado."
+        iconColor="#ff9800"
+      />
 
       <Grid container spacing={4}>
         {/* Panel Izquierdo: Formulario de Colocación */}

@@ -8,6 +8,7 @@ import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import SecurityIcon from "@mui/icons-material/Security";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddAlertIcon from "@mui/icons-material/AddAlert";
+import PageHeader from "../components/layout/page-header";
 
 const AVAILABLE_ASSETS = ["AAPL", "NVDA", "TSLA", "AL30", "G Galicia", "SPY"];
 
@@ -72,17 +73,12 @@ function StopLossAlertsPage() {
   return (
     <Box sx={{ p: { xs: 2, md: 4 }, bgcolor: "#0b0e11", minHeight: "100vh", color: "white" }}>
       {/* Encabezado */}
-      <Box sx={{ mb: 3 }}>
-        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1 }}>
-          <SecurityIcon sx={{ color: "#ff9800", fontSize: 28 }} />
-          <Typography variant="h4" fontWeight={800}>
-            Stop-Loss y Alertas
-          </Typography>
-        </Stack>
-        <Typography variant="body2" color="gray">
-          Gestioná el riesgo de tu portafolio con órdenes automáticas de protección y avisos en tiempo real.
-        </Typography>
-      </Box>
+      <PageHeader
+        icon={SecurityIcon}
+        title="Stop-Loss y Alertas"
+        subtitle="Gestioná el riesgo de tu portafolio con órdenes automáticas de protección y avisos en tiempo real."
+        iconColor="#ff9800"
+      />
 
       {/* Pestañas sin barra inferior y selección en verde */}
       <Paper sx={{ bgcolor: "#15181e", border: "1px solid #1c2025", borderRadius: 2, mb: 4, overflow: "hidden" }}>

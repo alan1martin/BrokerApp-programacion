@@ -22,9 +22,11 @@ import Shield from "@mui/icons-material/Shield";
 import Help from "@mui/icons-material/Help"; 
 import DarkMode from "@mui/icons-material/DarkMode";
 import MenuIcon from "@mui/icons-material/Menu"; 
+import AdminPanelSettings from "@mui/icons-material/AdminPanelSettings";
 
-// NUEVO: Importamos el componente independiente de caja grande
+// Importamos el componente independiente de caja grande
 import CashDialog from "../pages/cash-page";
+import { getCurrentUserProfile } from "../services/auth-service";
 
 const drawerWidth = 250;
 
@@ -46,8 +48,18 @@ function DashboardLayout() {
   const [openTrading, setOpenTrading] = useState(false);
   const [openPortfolio, setOpenPortfolio] = useState(false);
 
-  // NUEVO ESTADO: Controla la apertura del diálogo grande de caja
+  // Controla la apertura del diálogo grande de caja
   const [openCashModal, setOpenCashModal] = useState(false);
+
+  // Estado del usuario activo logueado
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem("user");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
 
   // Sincronizar el estado del switch si cambia desde la página de Settings
   useEffect(() => {
@@ -60,8 +72,30 @@ function DashboardLayout() {
     return () => window.removeEventListener("storage", syncTheme);
   }, []);
 
+  // Cargar y sincronizar perfil del usuario conectado desde el backend
+  useEffect(() => {
+    let isMounted = true;
+    async function loadUserProfile() {
+      const token = localStorage.getItem("access");
+      if (!token) return;
+      try {
+        const data = await getCurrentUserProfile();
+        if (isMounted && data) {
+          setCurrentUser(data);
+          localStorage.setItem("user", JSON.stringify(data));
+        }
+      } catch (err) {
+        console.warn("No se pudo sincronizar perfil remoto en layout:", err);
+      }
+    }
+    loadUserProfile();
+    return () => { isMounted = false; };
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem("access");
+    localStorage.removeItem("refresh");
+    localStorage.removeItem("user");
     navigate("/login");
   };
 
@@ -118,52 +152,79 @@ function DashboardLayout() {
             <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#4caf50" }} />
             <ListItemText primary="Estado de Cuenta" slotProps={{ primary: { fontSize: "0.85rem" } }} />
           </ListItemButton>
-          <ListItemButton onClick={() => { navigate("/reports"); setMobileOpen(false); }} sx={{ py: 0.6 }}>
-            <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#4caf50" }} />
-            <ListItemText primary="Rendimiento e Informes" slotProps={{ primary: { fontSize: "0.85rem" } }} />
-          </ListItemButton>
-          <ListItemButton onClick={() => { navigate("/investor-profile"); setMobileOpen(false); }} sx={{ py: 0.6 }}>
-            <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#4caf50" }} />
-            <ListItemText primary="Perfil de Inversor" slotProps={{ primary: { fontSize: "0.85rem" } }} />
-          </ListItemButton>
-          {/* Abre el componente nuevo CashDialog */}
+
           <ListItemButton onClick={() => { setOpenCashModal(true); setMobileOpen(false); }} sx={{ py: 0.6 }}>
             <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#4caf50" }} />
             <ListItemText primary="Ingresar / Retirar Dinero" slotProps={{ primary: { fontSize: "0.85rem" } }} />
           </ListItemButton>
+
+          <ListItemButton onClick={() => { navigate("/investor-profile"); setMobileOpen(false); }} sx={{ py: 0.6 }}>
+            <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#4caf50" }} />
+            <ListItemText primary="Perfil del Inversor" slotProps={{ primary: { fontSize: "0.85rem" } }} />
+          </ListItemButton>
         </List>
       </Collapse>
 
-      {/* 2. MARKETS */}
+      {/* 2. MERCADOS */}
       <ListItemButton onClick={() => setOpenMarkets(!openMarkets)}>
         <ListItemIcon sx={iconContainerStyle("rgba(33, 150, 243, 0.15)")}>
           <ChartIcon sx={{ color: "#2196f3", fontSize: 18 }} />
         </ListItemIcon>
-        <ListItemText primary="Markets" slotProps={{ primary: { fontSize: "0.9rem", fontWeight: 600 } }} />
+        <ListItemText primary="Mercados" slotProps={{ primary: { fontSize: "0.9rem", fontWeight: 600 } }} />
         {openMarkets ? <ExpandLess sx={{ fontSize: 18 }} /> : <ExpandMore sx={{ fontSize: 18 }} />}
       </ListItemButton>
-      
+
       <Collapse in={openMarkets} timeout="auto" unmountOnExit>
         <List component="div" disablePadding sx={{ pl: 3.5 }}>
           <ListItemButton onClick={() => { navigate("/markets"); setMobileOpen(false); }} sx={{ py: 0.6 }}>
             <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#2196f3" }} />
-            <ListItemText primary="Panel de Cotizaciones" slotProps={{ primary: { fontSize: "0.85rem" } }} />
+            <ListItemText primary="Cotizaciones en Vivo" slotProps={{ primary: { fontSize: "0.85rem" } }} />
           </ListItemButton>
-          <ListItemButton onClick={() => { navigate("/markets/technical-analysis"); setMobileOpen(false); }} sx={{ py: 0.6 }}>
-            <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#2196f3" }} />
-            <ListItemText primary="Análisis Técnico" slotProps={{ primary: { fontSize: "0.85rem" } }} />
-          </ListItemButton>
-          <ListItemButton onClick={() => { navigate("/markets/favorites"); setMobileOpen(false); }} sx={{ py: 0.6 }}>
+
+          <ListItemButton onClick={() => { navigate("/favorites"); setMobileOpen(false); }} sx={{ py: 0.6 }}>
             <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#2196f3" }} />
             <ListItemText primary="Mis Favoritos" slotProps={{ primary: { fontSize: "0.85rem" } }} />
+          </ListItemButton>
+
+          <ListItemButton onClick={() => { navigate("/technical-analysis"); setMobileOpen(false); }} sx={{ py: 0.6 }}>
+            <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#2196f3" }} />
+            <ListItemText primary="Análisis Técnico" slotProps={{ primary: { fontSize: "0.85rem" } }} />
           </ListItemButton>
         </List>
       </Collapse>
 
-      {/* 3. PORTFOLIO */}
+      {/* 3. OPERAR */}
+      <ListItemButton onClick={() => setOpenTrading(!openTrading)}>
+        <ListItemIcon sx={iconContainerStyle("rgba(255, 152, 0, 0.15)")}>
+          <SwapHoriz sx={{ color: "#ff9800", fontSize: 18 }} />
+        </ListItemIcon>
+        <ListItemText primary="Operar" slotProps={{ primary: { fontSize: "0.9rem", fontWeight: 600 } }} />
+        {openTrading ? <ExpandLess sx={{ fontSize: 18 }} /> : <ExpandMore sx={{ fontSize: 18 }} />}
+      </ListItemButton>
+
+      <Collapse in={openTrading} timeout="auto" unmountOnExit>
+        <List component="div" disablePadding sx={{ pl: 3.5 }}>
+          <ListItemButton onClick={() => { navigate("/trading"); setMobileOpen(false); }} sx={{ py: 0.6 }}>
+            <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#ff9800" }} />
+            <ListItemText primary="Operar Activos" slotProps={{ primary: { fontSize: "0.85rem" } }} />
+          </ListItemButton>
+
+          <ListItemButton onClick={() => { navigate("/cautions"); setMobileOpen(false); }} sx={{ py: 0.6 }}>
+            <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#ff9800" }} />
+            <ListItemText primary="Cauciones (Tasa Fija)" slotProps={{ primary: { fontSize: "0.85rem" } }} />
+          </ListItemButton>
+
+          <ListItemButton onClick={() => { navigate("/stop-loss-alerts"); setMobileOpen(false); }} sx={{ py: 0.6 }}>
+            <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#ff9800" }} />
+            <ListItemText primary="Stop-Loss & Alertas" slotProps={{ primary: { fontSize: "0.85rem" } }} />
+          </ListItemButton>
+        </List>
+      </Collapse>
+
+      {/* 4. PORTFOLIO & REPORTES */}
       <ListItemButton onClick={() => setOpenPortfolio(!openPortfolio)}>
         <ListItemIcon sx={iconContainerStyle("rgba(156, 39, 176, 0.15)")}>
-          <AccountBalanceWallet sx={{ color: "#9c27b0", fontSize: 18 }} />
+          <ChartIcon sx={{ color: "#9c27b0", fontSize: 18 }} />
         </ListItemIcon>
         <ListItemText primary="Portfolio" slotProps={{ primary: { fontSize: "0.9rem", fontWeight: 600 } }} />
         {openPortfolio ? <ExpandLess sx={{ fontSize: 18 }} /> : <ExpandMore sx={{ fontSize: 18 }} />}
@@ -173,70 +234,55 @@ function DashboardLayout() {
         <List component="div" disablePadding sx={{ pl: 3.5 }}>
           <ListItemButton onClick={() => { navigate("/composition"); setMobileOpen(false); }} sx={{ py: 0.6 }}>
             <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#9c27b0" }} />
-            <ListItemText primary="Composición de Activos" slotProps={{ primary: { fontSize: "0.85rem" } }} />
+            <ListItemText primary="Composición de Tenencias" slotProps={{ primary: { fontSize: "0.85rem" } }} />
           </ListItemButton>
+
+          <ListItemButton onClick={() => { navigate("/reports"); setMobileOpen(false); }} sx={{ py: 0.6 }}>
+            <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#9c27b0" }} />
+            <ListItemText primary="Reporte de Rendimiento" slotProps={{ primary: { fontSize: "0.85rem" } }} />
+          </ListItemButton>
+
           <ListItemButton onClick={() => { navigate("/history"); setMobileOpen(false); }} sx={{ py: 0.6 }}>
             <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#9c27b0" }} />
-            <ListItemText primary="Historial de Órdenes" slotProps={{ primary: { fontSize: "0.85rem" } }} />
+            <ListItemText primary="Historial de Transacciones" slotProps={{ primary: { fontSize: "0.85rem" } }} />
           </ListItemButton>
-          <ListItemButton onClick={() => { navigate("/portfolio/wealth-projection"); setMobileOpen(false); }} sx={{ py: 0.6 }}>
+
+          <ListItemButton onClick={() => { navigate("/wealth-projection"); setMobileOpen(false); }} sx={{ py: 0.6 }}>
             <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#9c27b0" }} />
-            <ListItemText primary="Proyección de Interés Compuesto" slotProps={{ primary: { fontSize: "0.85rem" } }} />
+            <ListItemText primary="Proyección Patrimonial" slotProps={{ primary: { fontSize: "0.85rem" } }} />
           </ListItemButton>
         </List>
       </Collapse>
 
-      {/* 4. TRADING */}
-      <ListItemButton onClick={() => setOpenTrading(!openTrading)}>
-        <ListItemIcon sx={iconContainerStyle("rgba(255, 152, 0, 0.15)")}>
-          <SwapHoriz sx={{ color: "#ff9800", fontSize: 18 }} />
+      {/* 5. CONFIGURACIÓN */}
+      <ListItemButton onClick={() => { navigate("/settings"); setMobileOpen(false); }}>
+        <ListItemIcon sx={iconContainerStyle("rgba(100, 116, 139, 0.15)")}>
+          <Settings sx={{ color: "#94a3b8", fontSize: 18 }} />
         </ListItemIcon>
-        <ListItemText primary="Trading" slotProps={{ primary: { fontSize: "0.9rem", fontWeight: 600 } }} />
-        {openTrading ? <ExpandLess sx={{ fontSize: 18 }} /> : <ExpandMore sx={{ fontSize: 18 }} />}
+        <ListItemText primary="Configuración" slotProps={{ primary: { fontSize: "0.9rem", fontWeight: 600 } }} />
       </ListItemButton>
-
-      <Collapse in={openTrading} timeout="auto" unmountOnExit>
-        <List component="div" disablePadding sx={{ pl: 3.5 }}>
-          {/* Operar Activos */}
-          <ListItemButton 
-            onClick={() => { navigate("/trading"); setMobileOpen(false); }} 
-            sx={{ py: 0.6 }}
-          >
-            <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#ff9800" }} />
-            <ListItemText primary="Operar Activos" slotProps={{ primary: { fontSize: "0.85rem" } }} />
-          </ListItemButton>
-
-          {/* Cauciones & Tasa Fija */}
-          <ListItemButton 
-            onClick={() => { navigate("/trading/cautions"); setMobileOpen(false); }} 
-            sx={{ py: 0.6 }}
-          >
-            <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#ff9800" }} />
-            <ListItemText primary="Cauciones & Tasa Fija" slotProps={{ primary: { fontSize: "0.85rem" } }} />
-          </ListItemButton>
-
-          {/* Órdenes Automáticas y Alertas */}
-          <ListItemButton 
-            onClick={() => { navigate("/trading/stop-loss-alerts"); setMobileOpen(false); }} 
-            sx={{ py: 0.6 }}
-          >
-            <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#ff9800" }} />
-            <ListItemText primary="Stop-Loss & Alertas" slotProps={{ primary: { fontSize: "0.85rem" } }} />
-          </ListItemButton>
-        </List>
-      </Collapse>
     </List>
   );
 
+  const formatComitenteNumber = (acc) => {
+    if (!acc) return "CC N° 000001";
+    if (typeof acc === "string" && acc.startsWith("CC N° ")) return acc;
+    const digits = String(acc).replace(/\D/g, "");
+    const num = digits ? parseInt(digits, 10) : 1;
+    return `CC N° ${String(num).padStart(5, "0")}`;
+  };
+
+  const displayedUserName = currentUser?.full_name || currentUser?.username || "Mi Cuenta";
+  const displayedAccountNumber = formatComitenteNumber(currentUser?.account_number);
+
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: isDarkMode ? "#0b0e11" : "#f8fafc" }}>
+    <Box sx={{ display: "flex", bgcolor: isDarkMode ? "#0b0e11" : "#f8fafc", minHeight: "100vh" }}>
       
-      {/* ================= BARRA SUPERIOR ================= */}
+      {/* ================= BARRA SUPERIOR (HEADER) ================= */}
       <AppBar 
         position="fixed" 
         elevation={0}
         sx={{ 
-          width: "100%", 
           zIndex: (theme) => theme.zIndex.drawer + 1, 
           bgcolor: isDarkMode ? "#15181e" : "#ffffff", 
           borderBottom: isDarkMode ? "1px solid #1c2025" : "1px solid #e2e8f0" 
@@ -262,7 +308,7 @@ function DashboardLayout() {
             <Stack 
               direction="row" 
               alignItems="center" 
-              spacing={1.5}
+              spacing={1.5} 
               onClick={() => navigate("/")}
               sx={{ 
                 cursor: "pointer",
@@ -279,22 +325,39 @@ function DashboardLayout() {
             </Stack>
           </Stack>
 
-          <Stack direction="row" alignItems="center" spacing={1}>
+          {/* Menú de Usuario en Esquina Superior Derecha */}
+          <Stack direction="row" alignItems="center" spacing={1.5}>
             <Stack 
               direction="row" 
               alignItems="center" 
               spacing={1.5} 
               onClick={handleMenuOpen} 
-              sx={{ cursor: 'pointer', p: 0.8, borderRadius: 2, '&:hover': { bgcolor: isDarkMode ? '#1c2025' : '#f1f5f9' } }}
+              sx={{ 
+                cursor: 'pointer', 
+                p: 0.8, 
+                px: 1.5,
+                borderRadius: 2, 
+                border: isDarkMode ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.06)",
+                bgcolor: isDarkMode ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)",
+                '&:hover': { bgcolor: isDarkMode ? '#1c2025' : '#f1f5f9' },
+                transition: "all 0.2s"
+              }}
             >
-              <Typography variant="body2" fontWeight={600} sx={{ color: isDarkMode ? "#9ca3af" : "#475569" }}>
-                Martín
-              </Typography>
-              <Avatar sx={{ width: 32, height: 32, bgcolor: isDarkMode ? "#1c2025" : "#e2e8f0", border: isDarkMode ? "1px solid #2d3748" : "1px solid #cbd5e1", color: isDarkMode ? "#9ca3af" : "#475569" }}>
-                <AccountCircle sx={{ fontSize: 28 }} />
+              <Box sx={{ textAlign: "right", display: { xs: "none", sm: "block" } }}>
+                <Typography variant="body2" fontWeight={700} sx={{ color: isDarkMode ? "white" : "#0f172a", lineHeight: 1.2 }}>
+                  {displayedUserName}
+                </Typography>
+                <Typography variant="caption" fontWeight={600} sx={{ color: "#4caf50", fontSize: "0.75rem" }}>
+                  {displayedAccountNumber}
+                </Typography>
+              </Box>
+
+              <Avatar sx={{ width: 34, height: 34, bgcolor: "rgba(76, 175, 80, 0.15)", border: "1px solid #4caf50", color: "#4caf50", fontWeight: 700, fontSize: "0.9rem" }}>
+                {displayedUserName.charAt(0).toUpperCase()}
               </Avatar>
             </Stack>
 
+            {/* Menú Desplegable del Perfil Optimizado y Responsivo */}
             <Menu
               anchorEl={anchorEl}
               open={Boolean(anchorEl)}
@@ -306,8 +369,10 @@ function DashboardLayout() {
                   color: isDarkMode ? "white" : "#0f172a", 
                   border: isDarkMode ? "1px solid #1c2025" : "1px solid #e2e8f0", 
                   mt: 1.5,
-                  minWidth: 220,
-                  boxShadow: isDarkMode ? "0px 8px 24px rgba(0,0,0,0.5)" : "0px 8px 24px rgba(0,0,0,0.1)",
+                  minWidth: 280,
+                  maxWidth: 340,
+                  borderRadius: 2,
+                  boxShadow: isDarkMode ? "0px 10px 30px rgba(0,0,0,0.6)" : "0px 10px 30px rgba(0,0,0,0.08)",
                   "& .MuiMenuItem-root": {
                     fontSize: "0.88rem",
                     py: 1.2,
@@ -317,6 +382,34 @@ function DashboardLayout() {
                 }
               }}
             >
+              {/* Tarjeta de Identificación del Usuario y Cuenta Comitente */}
+              <Box sx={{ px: 2.5, py: 2 }}>
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  <Avatar sx={{ width: 44, height: 44, bgcolor: "rgba(76, 175, 80, 0.15)", border: "1px solid #4caf50", color: "#4caf50", fontWeight: 700 }}>
+                    {displayedUserName.charAt(0).toUpperCase()}
+                  </Avatar>
+                  <Box sx={{ overflow: "hidden" }}>
+                    <Typography variant="subtitle2" fontWeight={800} color={isDarkMode ? "white" : "#0f172a"} noWrap>
+                      {displayedUserName}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: isDarkMode ? "#9ca3af" : "#64748b" }} noWrap display="block">
+                      {currentUser?.email || "usuario@peakinvestments.ar"}
+                    </Typography>
+                  </Box>
+                </Stack>
+
+                <Box sx={{ mt: 1.8, p: 1.2, borderRadius: 1.5, bgcolor: isDarkMode ? "#0b0e11" : "#f1f5f9", border: isDarkMode ? "1px solid #1c2025" : "1px solid #e2e8f0" }}>
+                  <Typography variant="caption" sx={{ color: isDarkMode ? "#9ca3af" : "#64748b", display: "block", textTransform: "uppercase", fontSize: "0.68rem", fontWeight: 700, letterSpacing: 0.5 }}>
+                    Cuenta Comitente Asignada
+                  </Typography>
+                  <Typography variant="body2" fontWeight={800} color="#4caf50">
+                    {displayedAccountNumber}
+                  </Typography>
+                </Box>
+              </Box>
+
+              <Divider sx={{ bgcolor: isDarkMode ? "#1c2025" : "#e2e8f0", my: "0 !important" }} />
+
               <MenuItem onClick={() => { handleMenuClose(); navigate("/settings/profile"); }}>
                 <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}><AccountBox sx={{ fontSize: 20 }} /></ListItemIcon>
                 Mi Perfil
@@ -336,6 +429,23 @@ function DashboardLayout() {
                 <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}><Help sx={{ fontSize: 20 }} /></ListItemIcon>
                 Centro de Ayuda
               </MenuItem>
+
+              {/* Si es Superusuario o Staff: Acceso rápido a Django Admin */}
+              {(currentUser?.is_superuser || currentUser?.is_staff) && (
+                <MenuItem 
+                  component="a" 
+                  href="http://localhost:8000/admin/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  onClick={handleMenuClose}
+                  sx={{ color: "#ff9800 !important" }}
+                >
+                  <ListItemIcon sx={{ minWidth: 32, color: "#ff9800" }}>
+                    <AdminPanelSettings sx={{ fontSize: 20 }} />
+                  </ListItemIcon>
+                  Django Admin (Noticias / CMS)
+                </MenuItem>
+              )}
 
               <Divider sx={{ bgcolor: isDarkMode ? "#1c2025" : "#e2e8f0", my: "4px !important" }} />
 
@@ -406,8 +516,8 @@ function DashboardLayout() {
         component="main" 
         sx={{ 
           flexGrow: 1, 
-          p: 3, 
-          pt: "88px", 
+          p: { xs: 2, md: 3 }, 
+          pt: { xs: "80px", md: "88px" }, 
           minHeight: "100vh",
           overflowX: "hidden",
           width: { md: `calc(100% - ${drawerWidth}px)` }, 

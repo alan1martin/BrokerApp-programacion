@@ -8,6 +8,8 @@ import {
 import { getPortfolio, getTransactionHistory } from "../services/portfolio-service"; 
 import { useMarket } from "../context/market-context.jsx";
 import { getAssetLogo } from "../utils/get-logo";
+import BarChartIcon from "@mui/icons-material/BarChart";
+import PageHeader from "../components/layout/page-header";
 
 function Reports() {
   const { assets: marketAssets, loadingMarket } = useMarket();
@@ -188,17 +190,21 @@ function Reports() {
   return (
     <Box>
       <Stack 
-        direction="row" 
+        direction={{ xs: "column", sm: "row" }} 
         sx={{ 
           display: "flex", 
           justifyContent: "space-between", 
-          alignItems: "center", 
-          mb: 3 
+          alignItems: { xs: "flex-start", sm: "center" }, 
+          mb: 3,
+          gap: 2
         }}
       >
-        <Typography variant="h5" fontWeight={800} color="white">
-          Rendimiento e Informes
-        </Typography>
+        <PageHeader
+          icon={BarChartIcon}
+          title="Rendimiento e Informes"
+          subtitle="Monitoreá la evolución histórica del valor total de tu cartera y el balance por activo."
+          iconColor="#4caf50"
+        />
 
         <ButtonGroup 
           size="small" 

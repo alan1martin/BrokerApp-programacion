@@ -1,9 +1,16 @@
-//frontend/src/context/market-context.jsx
-import { createContext, useContext, useState, useEffect } from "react";
-// Importamos la instancia configurada que ya tiene el prefijo /api y los interceptores de token
+// frontend/src/context/market-context.jsx
+import { createContext, useState, useEffect, useContext } from "react";
 import api from "../services/api"; 
 
-const MarketContext = createContext();
+export const MarketContext = createContext();
+
+export const useMarket = () => {
+  const context = useContext(MarketContext);
+  if (!context) {
+    throw new Error("useMarket debe ser usado dentro de un MarketProvider");
+  }
+  return context;
+};
 
 const INITIAL_ASSETS = [
   { symbol: "AAPL", name: "Apple Inc.", currentPrice: 175.50, change24h: 1.2 },
@@ -12,34 +19,40 @@ const INITIAL_ASSETS = [
   { symbol: "BTC", name: "Bitcoin", currentPrice: 65000.00, change24h: 0.5 },
 ];
 
-// ================= FUNCIÓN CONTROL DE HORARIOS (MERCADO ARGENTINO) =================
+// Comprobación de horario de mercado tradicional
 const isTraditionalMarketOpen = () => {
   const ahora = new Date();
   const diaSemana = ahora.getDay(); // 0 = Domingo, 6 = Sábado
-
-  // Fines de semana cerrado completo
   if (diaSemana === 0 || diaSemana === 6) return false;
 
   const hora = ahora.getHours();
   const minutos = ahora.getMinutes();
   const tiempoEnMinutos = hora * 60 + minutos;
 
-  // Rango de operación en Argentina: 10:30 hs a 17:00 hs
-  const aperturaMinutos = 10 * 60 + 30; // 10:30
-  const cierreMinutos = 17 * 60;         // 17:00
+  // Horario bursátil habitual 10:30 a 17:00 hs
+  const aperturaMinutos = 10 * 60 + 30;
+  const cierreMinutos = 17 * 60;
 
   return tiempoEnMinutos >= aperturaMinutos && tiempoEnMinutos <= cierreMinutos;
 };
 
 export function MarketProvider({ children }) {
-  const [assets, setAssets] = useState(INITIAL_ASSETS);
-  const [loadingMarket, setLoadingMarket] = useState(true);
+  // Inicializamos desde localStorage si existe para retener inmediatamente el último precio conocido (last price)
+  const [assets, setAssets] = useState(() => {
+    try {
+      const saved = localStorage.getItem("last_known_market_assets");
+      return saved ? JSON.parse(saved) : INITIAL_ASSETS;
+    } catch {
+      return INITIAL_ASSETS;
+    }
+  });
+  const [loadingMarket, setLoadingMarket] = useState(false);
 
   const fetchRealPrices = async () => {
     const token = localStorage.getItem("access");
 
-    if (!token || token === "token_falso_de_prueba_123") {
-      setAssets(INITIAL_ASSETS);
+    // Si no hay token de autenticación válido, conservamos los activos en memoria
+    if (!token) {
       setLoadingMarket(false);
       return;
     }
@@ -51,75 +64,83 @@ export function MarketProvider({ children }) {
       const pricePromises = symbolsToFetch.map(async (symbol) => {
         const esCrypto = symbol === "BTC";
 
-        // ================= FILTRO ESTRATÉGICO DE PETICIONES =================
-        // Si no es Bitcoin y el mercado está cerrado, salteamos el fetch directo
+        // Si no es criptomoneda y el mercado tradicional está cerrado, retenemos el último precio conocido
         if (!esCrypto && !mercadoAbierto) {
-          return {
-            symbol: symbol,
-            skipUpdate: true // Bandera para decirle al estado que deje el precio previo intacto
-          };
+          return { symbol, skipUpdate: true };
         }
 
         try {
-          // Reemplazamos el fetch manual y propenso a CORS por nuestra instancia de Axios.
-          // Como 'api' ya apunta a http://localhost:8000/api e inyecta los headers, solo definimos el endpoint relativo.
           const response = await api.get(`/portfolio/history/${symbol}/`);
-
-          if (response.status === 200) {
+          if (response.status === 200 && response.data) {
             const data = response.data;
-            return {
-              symbol: symbol,
-              currentPrice: data.currentPrice || data.price,
-              name: data.companyName || symbol
-            };
+            const price = parseFloat(data.currentPrice || data.price);
+            if (!isNaN(price) && price > 0) {
+              return {
+                symbol,
+                currentPrice: price,
+                name: data.companyName || symbol
+              };
+            }
           }
-          
-        } catch (e) {
-          if (e.response && e.response.status === 401) {
-            console.warn(`Django rechazó la autenticación (401) para el activo: ${symbol}. Usando simulación.`);
-          } else {
-            console.error(`No se pudo obtener precio real de ${symbol} desde Django:`, e);
-          }
+        } catch {
+          // Captura silenciosa sin arrojar alertas ni provocar 401 en consola
+          return { symbol, skipUpdate: true };
         }
         return null;
       });
 
       const updatedPricesResults = await Promise.all(pricePromises);
 
-      setAssets((prevAssets) =>
-        prevAssets.map((asset) => {
-          const updatedInfo = updatedPricesResults.find(r => r && r.symbol === asset.symbol);
+      setAssets((prevAssets) => {
+        const nextAssets = prevAssets.map((asset) => {
+          const updatedInfo = updatedPricesResults.find((r) => r && r.symbol === asset.symbol);
           
-          // Si el control de horarios frenó la actualización, mantenemos el valor que ya teníamos en pantalla
-          if (updatedInfo && updatedInfo.skipUpdate) {
-            return asset; 
+          // Si vino orden de saltear (mercado cerrado o error), retener el último precio intacto
+          if (!updatedInfo || updatedInfo.skipUpdate) {
+            return asset;
           }
 
-          if (updatedInfo && updatedInfo.currentPrice) {
+          if (updatedInfo.currentPrice) {
             return {
               ...asset,
-              name: updatedInfo.name,
-              currentPrice: parseFloat(updatedInfo.currentPrice)
+              name: updatedInfo.name || asset.name,
+              currentPrice: updatedInfo.currentPrice
             };
           }
           
-          // Fallback por si la API falla estando el mercado abierto
-          const fallbackAsset = INITIAL_ASSETS.find(a => a.symbol === asset.symbol);
-          return fallbackAsset ? { ...asset, currentPrice: fallbackAsset.currentPrice } : asset;
-        })
-      );
+          return asset;
+        });
 
-    } catch (error) {
-      console.error("Error general actualizando el mercado:", error);
+        // Guardamos en localStorage para persistencia offline / post-recarga
+        try {
+          localStorage.setItem("last_known_market_assets", JSON.stringify(nextAssets));
+        } catch {
+          // Ignore storage quota
+        }
+
+        return nextAssets;
+      });
+
+    } catch {
+      // Silenciar excepción para que la aplicación mantenga el último precio de forma limpia
     } finally {
       setLoadingMarket(false); 
     }
   };
 
   useEffect(() => {
-    fetchRealPrices();
+    let isMounted = true;
+    const loadPrices = async () => {
+      if (isMounted) {
+        await fetchRealPrices();
+      }
+    };
+    loadPrices();
     const interval = setInterval(fetchRealPrices, 30000); // 30 segundos
-    return () => clearInterval(interval);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   return (
@@ -128,11 +149,3 @@ export function MarketProvider({ children }) {
     </MarketContext.Provider>
   );
 }
-
-export const useMarket = () => {
-  const context = useContext(MarketContext);
-  if (!context) {
-    throw new Error("useMarket debe ser usado dentro de un MarketProvider");
-  }
-  return context;
-};

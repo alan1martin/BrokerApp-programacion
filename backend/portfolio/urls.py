@@ -12,10 +12,12 @@ from .views import (
     get_portfolio_news,
     get_favorites,
     toggle_favorite,
+    get_current_user_profile,
 )
 
 urlpatterns = [
     path('', PortfolioDetailView.as_view(), name='portfolio-detail'),
+    path('me/', get_current_user_profile, name='portfolio-user-profile'),
     path('trade/', ExecuteTradeView.as_view(), name='execute-trade'), 
     path('transactions/', TransactionListView.as_view(), name='transaction-list'), 
     path('reset/', reset_portfolio, name='reset-portfolio'), 

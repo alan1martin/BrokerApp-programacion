@@ -8,10 +8,9 @@ ENV PYTHONUNBUFFERED=1
 # 3. Establece el directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-# 4. Instala las dependencias del sistema necesarias (incluye cabeceras para PostgreSQL)
+# 4. Instala herramientas esenciales del sistema
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # 5. Copia el archivo de requisitos e instala las dependencias de Python
@@ -25,5 +24,5 @@ COPY . /app/
 # 7. Expone el puerto 8000 que usa Django
 EXPOSE 8000
 
-# 8. Comando de producción: ejecuta migraciones, crea superusuario (si se proveen variables) y levanta Gunicorn
-CMD ["sh", "-c", "python manage.py migrate --noinput && (if [ -n \"$DJANGO_SUPERUSER_USERNAME\" ] && [ -n \"$DJANGO_SUPERUSER_PASSWORD\" ]; then python manage.py createsuperuser --noinput --username \"$DJANGO_SUPERUSER_USERNAME\" --email \"${DJANGO_SUPERUSER_EMAIL:-admin@academia.ar}\" || true; fi) && gunicorn config.wsgi:application --bind 0.0.0.0:8000"]
+# 8. Comando de inicio: ejecuta migraciones, corre setup inicial (superusuario, cuenta comitente y noticias) y levanta Gunicorn
+CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py setup_initial_data && gunicorn config.wsgi:application --bind 0.0.0.0:8000"]

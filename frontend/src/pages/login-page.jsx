@@ -10,6 +10,7 @@ function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ username: "", password: "" });
   const [errorMsg, setErrorMsg] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -18,21 +19,27 @@ function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg("");
+    setLoading(true);
     
     try {
-      console.log("Enviando credenciales a Django...");
       const data = await loginUser(formData.username, formData.password);
       
       if (data && data.access) {
         localStorage.setItem("access", data.access);
         localStorage.setItem("refresh", data.refresh);
+        if (data.user) {
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
         navigate("/");
       } else {
         setErrorMsg("El servidor no devolvió los tokens esperados.");
       }
     } catch (error) {
       console.error("Error en el login visual:", error);
-      setErrorMsg("Usuario o contraseña incorrectos. Verificá los datos en Django.");
+      const detail = error.response?.data?.detail;
+      setErrorMsg(detail || "Usuario, correo, DNI o contraseña incorrectos. Verificá los datos.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -112,11 +119,11 @@ function LoginPage() {
           </Stack>
 
           <Typography variant="h2" fontWeight={700} sx={{ lineHeight: 1.15, letterSpacing: "-0.02em" }}>
-            Tomá el control de tu futuro financiero.
+            El ecosistema integral para potenciar tus inversiones.
           </Typography>
 
           <Typography variant="h6" fontWeight={400} sx={{ color: "#9ca3af", lineHeight: 1.6, maxWidth: "750px" }}>
-            Operá acciones del Merval, CEDEARs y gestioná tu cartera en tiempo real con herramientas avanzadas de análisis de mercado.
+            Cotizaciones en tiempo real, simulación con capital dinámico y herramientas profesionales para operar en los mercados más competitivos del mundo.
           </Typography>
         </Stack>
       </Box>
@@ -155,7 +162,7 @@ function LoginPage() {
           <Box component="form" onSubmit={handleSubmit}>
             <Stack spacing={3}>
               <TextField
-                label="Usuario"
+                label="Usuario, Email o DNI"
                 name="username"
                 variant="outlined"
                 fullWidth
@@ -213,6 +220,7 @@ function LoginPage() {
                 variant="contained"
                 size="large"
                 fullWidth
+                disabled={loading}
                 sx={{
                   bgcolor: "#4caf50",
                   color: "black",
@@ -224,7 +232,7 @@ function LoginPage() {
                   borderRadius: 1.5
                 }}
               >
-                Ingresar a mi Cuenta
+                {loading ? "Iniciando sesión..." : "Ingresar a mi Cuenta"}
               </Button>
             </Stack>
           </Box>

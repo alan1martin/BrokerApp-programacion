@@ -148,6 +148,8 @@ class UserRegistrationTests(TestCase):
 
     def test_register_new_user(self):
         response = self.client.post("/api/register/", {
+            "full_name": "Nuevo Inversor",
+            "dni": "40123456",
             "username": "newinvestor",
             "email": "investor@test.com",
             "password": "strongPassword123",
