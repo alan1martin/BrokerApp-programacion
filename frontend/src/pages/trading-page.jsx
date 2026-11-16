@@ -1,27 +1,31 @@
 // frontend/src/pages/trading-page.jsx
 import { Grid, Typography, Card, CardContent, TextField, Button, Stack, Tabs, Tab, Box, MenuItem, Alert, CircularProgress } from "@mui/material";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom"; 
 import { executeTrade } from "../services/portfolio-service";
 import { useMarket } from "../context/market-context.jsx";
 import TradingChart from "../components/dashboard/trading-chart";
+import PageHeader from "../components/layout/page-header";
+import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 
 function TradingPage() {
   const { assets, loadingMarket } = useMarket();
   const location = useLocation(); 
 
   const [action, setAction] = useState(0); 
-  const [selectedSymbol, setSelectedSymbol] = useState("AAPL");
+  const [selectedSymbol, setSelectedSymbol] = useState(() => location.state?.defaultSymbol || "AAPL");
+  const prevSymbolRef = useRef(location.state?.defaultSymbol);
   const [quantity, setQuantity] = useState("");
   
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null); 
 
   useEffect(() => {
-    if (location.state?.defaultSymbol) {
+    if (location.state?.defaultSymbol && location.state.defaultSymbol !== prevSymbolRef.current) {
+      prevSymbolRef.current = location.state.defaultSymbol;
       setSelectedSymbol(location.state.defaultSymbol);
     }
-  }, [location.state]);
+  }, [location.state?.defaultSymbol]);
 
   const currentAsset = assets.find(a => a.symbol === selectedSymbol);
   
@@ -89,13 +93,13 @@ function TradingPage() {
   const handleExecuteTrade = async (e) => { 
     e.preventDefault();
     setLoading(true);
-    setStatusMessage(null);
+    setStatusMessage(null); 
 
     const tradeData = {
       symbol: selectedSymbol,
       transaction_type: action === 0 ? "BUY" : "SELL", 
       quantity: parseFloat(quantity),
-      price: currentAsset.currentPrice
+      price: currentAsset?.currentPrice || 0
     };
 
     try {
@@ -108,10 +112,10 @@ function TradingPage() {
       if (error.response && error.response.status >= 400 && error.response.status < 500) {
         const errorMsg = error.response.data?.error || error.response.data?.detail || error.message || "Error en los datos de la orden.";
         setStatusMessage({ type: "error", text: errorMsg });
-        return; // 🛑 Cortamos acá para NO ejecutar el fallback local simulado si el backend la rechazó
+        return; // Cortamos acá para no ejecutar el fallback si fue rechazada
       }
 
-      // En caso de que el backend no responda o sea un error de red (5xx o caída de servidor)
+      // En caso de que el backend no responda o sea un error de red
       console.warn("Backend inalcanzable. Derivando a simulación local de contingencia...");
       try {
         executeLocalSimulatedTrade(tradeData);
@@ -137,8 +141,13 @@ function TradingPage() {
   }
   
   return (
-    <Stack spacing={4}>
-      <Typography variant="h4" fontWeight={700}>Operar Activos</Typography>
+    <Stack spacing={3}>
+      <PageHeader
+        icon={SwapHorizIcon}
+        title="Operar Activos"
+        subtitle="Ejecutá órdenes de compra y venta al instante con gráficos de cotizaciones en tiempo real."
+        iconColor="#ff9800"
+      />
 
       {statusMessage && (
         <Alert severity={statusMessage.type} variant="filled" sx={{ width: "100%" }}>
@@ -166,14 +175,12 @@ function TradingPage() {
               </Box>
 
               <Typography color="gray" variant="body2" sx={{ mb: 2 }}>
-                Mercado Real • Precios en tiempo real
+                Mercado Real • Widget Oficial TradingView (Gráfico de Líneas en Tiempo Real)
               </Typography>
               
               {currentAsset && (
                 <TradingChart 
                   symbol={currentAsset.symbol} 
-                  currentPrice={currentAsset.currentPrice}
-                  isAssetUp={isUp} 
                 />
               )}
             </CardContent>

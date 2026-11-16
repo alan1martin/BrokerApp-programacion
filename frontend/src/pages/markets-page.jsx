@@ -22,6 +22,8 @@ import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import BoltIcon from "@mui/icons-material/Bolt";
 import StarIcon from "@mui/icons-material/Star";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
+import QueryStatsIcon from "@mui/icons-material/QueryStats";
+import PageHeader from "../components/layout/page-header";
 
 // Servicios de la API
 import { getFavorites, toggleFavorite } from "../services/market-service";
@@ -45,7 +47,7 @@ function MarketsPage() {
           setFavorites(data);
           localStorage.setItem("peak_favorites", JSON.stringify(data));
         }
-      } catch (error) {
+      } catch {
         console.warn("API SQLite no disponible. Usando datos guardados en localStorage local.");
       }
     }
@@ -78,15 +80,13 @@ function MarketsPage() {
   };
 
   return (
-    <Stack spacing={4}>
-      <Stack>
-        <Typography variant="h4" fontWeight={700}>
-          Mercados Financieros
-        </Typography>
-        <Typography color="gray" variant="body2">
-          Seguimiento de cotizaciones globales en tiempo real con alertas de rendimiento.
-        </Typography>
-      </Stack>
+    <Stack spacing={3}>
+      <PageHeader
+        icon={QueryStatsIcon}
+        title="Mercados Financieros"
+        subtitle="Seguimiento de cotizaciones globales en tiempo real con alertas de rendimiento."
+        iconColor="#2196f3"
+      />
 
       <TableContainer component={Paper} sx={{ backgroundColor: "#15181e", borderRadius: 2 }}>
         <Table aria-label="tabla de mercados">

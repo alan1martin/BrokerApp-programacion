@@ -1,14 +1,31 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-# --- 1. MODELO PORTFOLIO (UNO SOLO Y CON EL CASH BALANCE) ---
+# --- 1. MODELO PORTFOLIO (CUENTA COMITENTE Y CASH BALANCE) ---
 class Portfolio(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="portfolio")
+    account_number = models.CharField(max_length=20, unique=True, blank=True, verbose_name="Número de Cuenta Comitente")
+    dni = models.CharField(max_length=20, blank=True, null=True, db_index=True, verbose_name="DNI")
+    full_name = models.CharField(max_length=150, blank=True, verbose_name="Nombre Completo")
     cash_balance = models.DecimalField(max_digits=15, decimal_places=2, default=10000.00)
     total_value = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
 
+    def save(self, *args, **kwargs):
+        if not self.account_number:
+            last_portfolio = Portfolio.objects.exclude(account_number='').order_by('-id').first()
+            if last_portfolio and last_portfolio.account_number:
+                digits = ''.join(filter(str.isdigit, last_portfolio.account_number))
+                next_number = int(digits) + 1 if digits else Portfolio.objects.count() + 1
+            else:
+                next_number = 1
+            
+            # Formato con prefijo incluido: CC N° 00001
+            self.account_number = f"CC N° {next_number:05d}"
+            
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"Portfolio de {self.user.username}"
+        return f"Cuenta {self.account_number} ({self.full_name or self.user.username})"
 
     @property
     def calculated_total_value(self):
@@ -65,3 +82,22 @@ class Favorite(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.symbol}"
+
+
+# --- 5. MODELO MARKETNEWS (Noticias del Dashboard administrables desde Django Admin) ---
+class MarketNews(models.Model):
+    title = models.CharField(max_length=255, verbose_name="Título")
+    summary = models.TextField(blank=True, verbose_name="Resumen")
+    link = models.URLField(blank=True, default="", verbose_name="Enlace de la Noticia")
+    publisher = models.CharField(max_length=100, default="Peak News", verbose_name="Medio / Publicador")
+    related_ticker = models.CharField(max_length=20, default="MERCADO", verbose_name="Ticker / Activo")
+    is_active = models.BooleanField(default=True, verbose_name="Activa")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Creación")
+
+    class Meta:
+        verbose_name = "Noticia del Mercado"
+        verbose_name_plural = "Noticias del Mercado"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"[{self.related_ticker}] {self.title}"

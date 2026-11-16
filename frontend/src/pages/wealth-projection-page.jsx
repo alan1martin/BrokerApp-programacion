@@ -4,6 +4,7 @@ import Chart from "react-apexcharts";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import SavingsIcon from "@mui/icons-material/Savings";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
+import PageHeader from "../components/layout/page-header";
 
 function WealthProjectionPage() {
   // Estados para los controles de proyección
@@ -104,18 +105,13 @@ function WealthProjectionPage() {
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 }, bgcolor: "#0b0e11", minHeight: "100vh", color: "white" }}>
-      {/* Encabezado */}
-      <Box sx={{ mb: 4 }}>
-        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1 }}>
-          {/* <TrendingUpIcon sx={{ color: "#9c27b0", fontSize: 28 }} /> */}
-          <Typography variant="h4" fontWeight={800}>
-            Proyección Patrimonial
-          </Typography>
-        </Stack>
-        <Typography variant="body2" color="gray">
-          Analizá el crecimiento a largo plazo de tu capital mediante el efecto del interés compuesto y aportes periódicos.
-        </Typography>
-      </Box>
+      {/* Encabezado Estandarizado */}
+      <PageHeader
+        icon={TrendingUpIcon}
+        title="Proyección Patrimonial"
+        subtitle="Analizá el crecimiento a largo plazo de tu capital mediante el efecto del interés compuesto y aportes periódicos."
+        iconColor="#9c27b0"
+      />
 
       <Grid container spacing={4}>
         {/* Panel Izquierdo: Controles de Parámetros */}

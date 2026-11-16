@@ -21,6 +21,7 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import BoltIcon from "@mui/icons-material/Bolt";
 import StarIcon from "@mui/icons-material/Star";
+import PageHeader from "../components/layout/page-header";
 
 // Servicios de la API
 import { getFavorites, toggleFavorite } from "../services/market-service";
@@ -44,7 +45,7 @@ function FavoritesPage() {
           setFavorites(data);
           localStorage.setItem("peak_favorites", JSON.stringify(data));
         }
-      } catch (error) {
+      } catch {
         console.warn("API SQLite no disponible en Favoritos. Usando datos de localStorage.");
       }
     }
@@ -75,15 +76,13 @@ function FavoritesPage() {
   const favoriteAssets = assets.filter((asset) => favorites.includes(asset.symbol));
 
   return (
-    <Stack spacing={4}>
-      <Stack>
-        <Typography variant="h4" fontWeight={700}>
-          Mis Favoritos
-        </Typography>
-        <Typography color="gray" variant="body2">
-          Tu lista de seguimiento personalizada. Hacé clic en la estrella para remover cualquier activo.
-        </Typography>
-      </Stack>
+    <Stack spacing={3}>
+      <PageHeader
+        icon={StarIcon}
+        title="Mis Favoritos"
+        subtitle="Tu lista de seguimiento personalizada. Hacé clic en la estrella para alternar cualquier activo."
+        iconColor="#ffb703"
+      />
 
       {favoriteAssets.length === 0 ? (
         <Paper sx={{ backgroundColor: "#15181e", p: 4, borderRadius: 2, textAlign: "center" }}>

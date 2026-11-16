@@ -5,8 +5,11 @@ import { useMarket } from "../context/market-context.jsx";
 import { getPortfolio, getTransactionHistory } from "../services/portfolio-service";
 import PortfolioPieChart from "../components/dashboard/portfolio-pie-chart";
 import PortfolioValueChart from "../components/dashboard/portfolio-value-chart"; 
+import MarketTicker from "../components/dashboard/market-ticker";
+import PageHeader from "../components/layout/page-header";
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
+import DashboardIcon from '@mui/icons-material/Dashboard';
 import { getAssetLogo } from "../utils/get-logo";
 
 const formatTxType = (type) => {
@@ -54,7 +57,7 @@ function DashboardPage() {
           if (localPortfolio) setPortfolioData(JSON.parse(localPortfolio));
         }
 
-      } catch (err) {
+      } catch {
         console.warn("Usando simulación completa con NVDA, TSLA y AAPL...");
         
         const localHistory = localStorage.getItem("simulated_history");
@@ -119,8 +122,17 @@ function DashboardPage() {
   });
 
   return (
-    <Stack spacing={4}>
-      <Typography variant="h4" fontWeight={600}>Estado de cuenta</Typography>
+    <Stack spacing={3.5}>
+      {/* Ticker Bar Superior de Cotizaciones Deslizante */}
+      <MarketTicker />
+
+      {/* Encabezado Estandarizado */}
+      <PageHeader
+        icon={DashboardIcon}
+        title="Estado de Cuenta"
+        subtitle="Monitoreo en tiempo real de tu liquidez, tenencias y evolución patrimonial."
+        iconColor="#4caf50"
+      />
 
       {/* FILA 1: Métricas Principales */}
       <Grid container spacing={3}>

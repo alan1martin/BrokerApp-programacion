@@ -9,6 +9,7 @@ import SpeedIcon from "@mui/icons-material/Speed";
 import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import ReplayIcon from "@mui/icons-material/Replay";
+import PageHeader from "../components/layout/page-header";
 
 // 1. Base de datos de preguntas y puntajes (Simil CNV Argentina - 10 Preguntas)
 const QUESTIONS = [
@@ -171,14 +172,12 @@ function InvestorProfilePage() {
   return (
     <Stack spacing={4} sx={{ width: "100%" }}>
       {/* Encabezado */}
-      <Stack>
-        <Typography variant="h4" fontWeight={700} color="white">
-          Perfil de Inversor
-        </Typography>
-        <Typography color="gray" variant="body2">
-          Descubrí tu tolerancia al riesgo para optimizar tu estrategia en el simulador.
-        </Typography>
-      </Stack>
+      <PageHeader
+        icon={AssignmentIndIcon}
+        title="Perfil de Inversor"
+        subtitle="Descubrí tu tolerancia al riesgo para optimizar tu estrategia en el simulador."
+        iconColor="#4caf50"
+      />
 
       {/* --- ESTADO 1: PANTALLA DE INICIO --- */}
       {step === "start" && (

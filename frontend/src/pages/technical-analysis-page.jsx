@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Box, Typography, Card, CardContent, Grid, MenuItem, Select, FormControl, InputLabel, Stack } from "@mui/material";
+import CandlestickChartIcon from "@mui/icons-material/CandlestickChart";
+import PageHeader from "../components/layout/page-header";
 
 // Mapeo de tickers a símbolos compatibles con TradingView
 const SYMBOL_MAP = {
@@ -73,15 +75,13 @@ function TechnicalAnalysisPage() {
 
   return (
     <Stack spacing={3} sx={{ width: "100%" }}>
-      {/* Encabezado Principal */}
-      <Box>
-        <Typography variant="h5" fontWeight={800} color="white">
-          Análisis Técnico
-        </Typography>
-        <Typography color="gray" variant="body2">
-          Gráficos avanzados en tiempo real, velas japonesas e indicadores de mercado.
-        </Typography>
-      </Box>
+      {/* Encabezado Principal Estandarizado */}
+      <PageHeader
+        icon={CandlestickChartIcon}
+        title="Análisis Técnico"
+        subtitle="Gráficos avanzados en tiempo real, velas japonesas e indicadores de mercado."
+        iconColor="#2196f3"
+      />
 
       {/* Grid Principal */}
       <Grid container spacing={3} sx={{ width: "100%", margin: 0 }}>

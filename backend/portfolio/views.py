@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, permissions
+from rest_framework import status, permissions, serializers
 from django.shortcuts import get_object_or_404
 from decimal import Decimal
 import yfinance as yf
@@ -8,10 +8,78 @@ import yfinance as yf
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.http import JsonResponse
+from django.contrib.auth.models import User
 
-from .models import Portfolio, Position, Transaction, Favorite
-from .serializers import PortfolioSerializer, TransactionSerializer, RegisterSerializer
+from .models import Portfolio, Position, Transaction, Favorite, MarketNews
+from .serializers import (
+    PortfolioSerializer, TransactionSerializer, RegisterSerializer,
+    UserProfileSerializer, MarketNewsSerializer
+)
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+# ================= LOGIN PERSONALIZADO MULTI-IDENTIFICADOR =================
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        login_input = str(attrs.get("username", "")).strip()
+        password = attrs.get("password", "")
+
+        # Permitir login por username, correo electrónico o DNI
+        user = User.objects.filter(username__iexact=login_input).first()
+        if not user:
+            user = User.objects.filter(email__iexact=login_input).first()
+        if not user:
+            portfolio_found = Portfolio.objects.filter(dni=login_input).first()
+            if portfolio_found:
+                user = portfolio_found.user
+
+        if user and user.check_password(password):
+            if not user.is_active:
+                raise serializers.ValidationError({"detail": "Esta cuenta de usuario se encuentra inactiva."})
+            # Reemplazamos por el username real para el motor subyacente de SimpleJWT
+            attrs["username"] = user.username
+        else:
+            raise serializers.ValidationError({"detail": "Usuario, correo, DNI o contraseña incorrectos."})
+
+        data = super().validate(attrs)
+
+        # Inyectamos los datos del usuario y su cuenta comitente para el frontend
+        profile = getattr(user, 'portfolio', None)
+        raw_acc = profile.account_number if profile else None
+        if raw_acc:
+            digits = "".join(filter(str.isdigit, str(raw_acc)))
+            num = int(digits) if digits else user.id
+            account_number = f"CC N° {num:05d}"
+        else:
+            account_number = f"CC N° {user.id:05d}"
+        full_name = profile.full_name if (profile and profile.full_name) else (user.get_full_name() or user.username)
+        dni = profile.dni if profile else ""
+
+        data['user'] = {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'full_name': full_name,
+            'dni': dni,
+            'account_number': account_number,
+            'is_superuser': user.is_superuser,
+            'is_staff': user.is_staff
+        }
+        return data
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+
+
+# ================= PERFIL DE USUARIO LOGUEADO =================
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_current_user_profile(request):
+    portfolio, _ = Portfolio.objects.get_or_create(user=request.user)
+    serializer = UserProfileSerializer(request.user)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -53,13 +121,14 @@ def get_stock_history(request, symbol):
         print(f"Error en get_stock_history: {str(e)}")
         return JsonResponse({'error': 'Error interno al consultar Yahoo Finance'}, status=500)
     
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def reset_portfolio(request):
     user = request.user
     Transaction.objects.filter(portfolio__user=user).delete()
     
-    portfolio, created = Portfolio.objects.get_or_create(user=user)
+    portfolio, _ = Portfolio.objects.get_or_create(user=user)
     portfolio.cash_balance = Decimal('10000.00')
     portfolio.total_value = Decimal('10000.00')
     portfolio.save()
@@ -67,6 +136,7 @@ def reset_portfolio(request):
     Position.objects.filter(portfolio=portfolio).delete()
     
     return Response({"message": "Cuenta reseteada con éxito. Volvés a tener $10,000.00 USD!"}, status=status.HTTP_200_OK)
+
 
 class TransactionListView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -77,11 +147,12 @@ class TransactionListView(APIView):
         serializer = TransactionSerializer(transactions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
 class PortfolioDetailView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        portfolio, created = Portfolio.objects.get_or_create(user=request.user)
+        portfolio, _ = Portfolio.objects.get_or_create(user=request.user)
         positions = Position.objects.filter(portfolio=portfolio)
         
         total_stocks_value = Decimal('0.00')
@@ -120,6 +191,7 @@ class PortfolioDetailView(APIView):
         serializer = PortfolioSerializer(portfolio)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
 class ExecuteTradeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -137,7 +209,7 @@ class ExecuteTradeView(APIView):
 
         trade_total_cost = quantity * price
 
-        position, created = Position.objects.get_or_create(
+        position, _ = Position.objects.get_or_create(
             portfolio=portfolio,
             symbol=symbol,
             defaults={'quantity': Decimal('0.00'), 'average_price': Decimal('0.00')}
@@ -189,6 +261,7 @@ class ExecuteTradeView(APIView):
             }
         }, status=status.HTTP_201_CREATED)
 
+
 class DepositWithdrawCashView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     
@@ -239,7 +312,8 @@ class DepositWithdrawCashView(APIView):
             "message": msg,
             "cash": str(portfolio.cash_balance)
         }, status=status.HTTP_200_OK)
-    
+
+
 class AssetCompositionView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -298,7 +372,8 @@ class AssetCompositionView(APIView):
             "total_value": round(total_patrimonio, 2),
             "assets": sorted(assets_data, key=lambda x: x['value'], reverse=True)
         }, status=status.HTTP_200_OK)
-    
+
+
 class MarketQuotesView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -348,8 +423,8 @@ class MarketQuotesView(APIView):
                 
         return Response(market_data, status=status.HTTP_200_OK)
 
-# ================= NUEVO ENDPOINT INTEGRADO PARA NOTICIAS DEL PATRIMONIO =================
-# Reemplazar la función del final de views.py por esta:
+
+# ================= NOTICIAS (ADMINISTRABLES DESDE DJANGO ADMIN + FALLBACK EN VIVO) =================
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_portfolio_news(request):
@@ -360,40 +435,58 @@ def get_portfolio_news(request):
         
         compiled_news = []
         
-        # Si tiene activos, intentamos traer noticias específicas de sus empresas
-        if tickers:
+        # 1. Prioridad: Noticias curadas y editables en Django Admin por el Superusuario
+        admin_news = MarketNews.objects.filter(is_active=True).order_by('-created_at')[:8]
+        for item in admin_news:
+            compiled_news.append({
+                "id": item.id,
+                "title": item.title,
+                "summary": item.summary,
+                "link": item.link or "#",
+                "publisher": item.publisher or "Peak Admin",
+                "providerPublishTime": int(item.created_at.timestamp()),
+                "related_ticker": item.related_ticker
+            })
+
+        # 2. Si faltan para completar 8, agregamos noticias de activos en cartera desde Yahoo Finance
+        if len(compiled_news) < 8 and tickers:
             for symbol in tickers:
+                if len(compiled_news) >= 8:
+                    break
                 symbol_yf = f"{symbol}-USD" if symbol in ['BTC', 'ETH', 'SOL'] else symbol
                 try:
                     ticker_obj = yf.Ticker(symbol_yf)
-                    # Usamos .news de yfinance
                     ticker_news = ticker_obj.news
                     if ticker_news:
-                        for news_item in ticker_news[:3]:
+                        for news_item in ticker_news[:2]:
+                            if len(compiled_news) >= 8:
+                                break
                             compiled_news.append({
                                 "title": news_item.get("title") or news_item.get("summary"),
-                                "link": news_item.get("link") or news_item.get("url"),
+                                "link": news_item.get("link") or news_item.get("url") or "#",
                                 "publisher": news_item.get("publisher") or "Yahoo Finance",
                                 "providerPublishTime": news_item.get("providerPublishTime") or news_item.get("pubDate"),
                                 "related_ticker": symbol
                             })
                 except Exception as yf_err:
-                    print(f"Error extrayendo noticias individuales para {symbol}: {yf_err}")
+                    print(f"Error extrayendo noticias para {symbol}: {yf_err}")
                     continue
 
-        # PLAN B: Si el usuario no tiene activos o las llamadas fallaron/devolvieron vacío,
-        # traemos las noticias del mercado general (S&P 500 y Dow Jones) para poblar la sección amarilla
-        if not compiled_news:
-            print("Cargando noticias de mercado general (Fallback)...")
+        # 3. Fallback con mercado general (SPY, DIA) si todavía hay espacio
+        if len(compiled_news) < 6:
             for fallback_symbol in ['SPY', 'DIA']:
+                if len(compiled_news) >= 8:
+                    break
                 try:
                     fallback_obj = yf.Ticker(fallback_symbol)
                     fallback_news = fallback_obj.news
                     if fallback_news:
-                        for news_item in fallback_news[:4]:
+                        for news_item in fallback_news[:2]:
+                            if len(compiled_news) >= 8:
+                                break
                             compiled_news.append({
                                 "title": news_item.get("title") or news_item.get("summary"),
-                                "link": news_item.get("link") or news_item.get("url"),
+                                "link": news_item.get("link") or news_item.get("url") or "#",
                                 "publisher": news_item.get("publisher") or "Financial News",
                                 "providerPublishTime": news_item.get("providerPublishTime") or news_item.get("pubDate"),
                                 "related_ticker": "MERCADO"
@@ -401,19 +494,18 @@ def get_portfolio_news(request):
                 except Exception as fb_err:
                     print(f"Error en fallback de noticias ({fallback_symbol}): {fb_err}")
 
-        # Ordenamos cronológicamente (más nuevos primero)
-        # Manejamos si providerPublishTime viene como string o int convirtiendo de forma segura
+        # Orden cronológico
         def get_time(x):
             t = x.get("providerPublishTime", 0)
             return int(t) if isinstance(t, (int, float)) else 0
 
         compiled_news.sort(key=get_time, reverse=True)
-        
         return Response({"news": compiled_news[:8]}, status=status.HTTP_200_OK)
-        
+
     except Exception as e:
         print(f"Error crítico en get_portfolio_news: {str(e)}")
         return Response({"error": f"Error interno: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 # ================= FAVORITOS =================
 @api_view(['GET'])
@@ -440,7 +532,7 @@ def toggle_favorite(request):
         return Response({'symbol': symbol, 'is_favorite': True, 'message': f'{symbol} agregado a favoritos.'}, status=status.HTTP_201_CREATED)
 
 
-# ================= REGISTRO DE USUARIOS =================
+# ================= REGISTRO DE USUARIOS MULTIPERSONA =================
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register_user(request):
@@ -448,10 +540,23 @@ def register_user(request):
     if serializer.is_valid():
         user = serializer.save()
         refresh = RefreshToken.for_user(user)
+        profile = getattr(user, 'portfolio', None)
+        account_number = profile.account_number if profile else "CC-000000"
+        full_name = profile.full_name if (profile and profile.full_name) else (user.get_full_name() or user.username)
+
         return Response({
             'message': 'Usuario registrado con éxito.',
             'access': str(refresh.access_token),
             'refresh': str(refresh),
-            'username': user.username
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'full_name': full_name,
+                'dni': profile.dni if profile else "",
+                'account_number': account_number,
+                'is_superuser': user.is_superuser,
+                'is_staff': user.is_staff
+            }
         }, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

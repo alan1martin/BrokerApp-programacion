@@ -215,7 +215,7 @@ function CashDialog({ open, onClose, onSuccess }) {
               <TextField 
                 fullWidth
                 label="Nombre y Apellido / Titular"
-                placeholder="ej: Martín Alloatti"
+                placeholder="ej: Juan Pérez"
                 value={holderName}
                 onChange={(e) => setHolderName(e.target.value)}
                 InputProps={{ sx: { color: "white", bgcolor: "#0b0e11" } }}

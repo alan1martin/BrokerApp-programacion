@@ -9,7 +9,8 @@ function RegisterPage() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    username: "",
+    full_name: "",
+    dni: "",
     email: "",
     password: "",
     password_confirm: ""
@@ -24,6 +25,21 @@ function RegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg("");
+
+    if (!formData.full_name.trim()) {
+      setErrorMsg("Ingresá tu nombre completo.");
+      return;
+    }
+
+    if (!formData.dni.trim()) {
+      setErrorMsg("Ingresá tu número de DNI.");
+      return;
+    }
+
+    if (!formData.email.trim()) {
+      setErrorMsg("Ingresá tu correo electrónico.");
+      return;
+    }
 
     if (formData.password !== formData.password_confirm) {
       setErrorMsg("Las contraseñas no coinciden.");
@@ -42,6 +58,9 @@ function RegisterPage() {
       if (data && data.access) {
         localStorage.setItem("access", data.access);
         localStorage.setItem("refresh", data.refresh);
+        if (data.user) {
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
         navigate("/");
       } else {
         navigate("/login");
@@ -50,12 +69,18 @@ function RegisterPage() {
       console.error("Error en el registro:", error);
       const respError = error.response?.data;
       if (respError) {
-        if (respError.username) {
-          setErrorMsg(Array.isArray(respError.username) ? respError.username[0] : respError.username);
+        if (respError.email) {
+          setErrorMsg(Array.isArray(respError.email) ? respError.email[0] : respError.email);
+        } else if (respError.dni) {
+          setErrorMsg(Array.isArray(respError.dni) ? respError.dni[0] : respError.dni);
+        } else if (respError.full_name) {
+          setErrorMsg(Array.isArray(respError.full_name) ? respError.full_name[0] : respError.full_name);
         } else if (respError.password) {
           setErrorMsg(Array.isArray(respError.password) ? respError.password[0] : respError.password);
         } else if (respError.password_confirm) {
           setErrorMsg(Array.isArray(respError.password_confirm) ? respError.password_confirm[0] : respError.password_confirm);
+        } else if (respError.detail) {
+          setErrorMsg(respError.detail);
         } else {
           setErrorMsg("Error al registrar usuario. Revisá los datos ingresados.");
         }
@@ -110,7 +135,7 @@ function RegisterPage() {
           </Typography>
 
           <Typography variant="h6" fontWeight={400} sx={{ color: "#9ca3af", lineHeight: 1.6, maxWidth: "750px" }}>
-            Creá tu cuenta en segundos, recibí $10,000 USD de capital simulado y comenzá a operar activos en tiempo real.
+            Creá tu cuenta comitente en segundos, recibí $10,000 USD de capital simulado y comenzá a operar activos en tiempo real.
           </Typography>
         </Stack>
       </Box>
@@ -118,26 +143,26 @@ function RegisterPage() {
       {/* SECCIÓN DERECHA: FORMULARIO DE REGISTRO */}
       <Box
         sx={{
-          width: { xs: "100%", md: "480px" },
+          width: { xs: "100%", md: "520px" },
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
-          p: 4,
+          p: { xs: 3, sm: 4 },
           bgcolor: "#0b0e11",
           borderLeft: { md: "1px solid #1c2025" },
           overflowY: "auto"
         }}
       >
-        <Card elevation={0} sx={{ width: "100%", maxWidth: 380, bgcolor: "transparent", color: "white" }}>
-          <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 3, display: { xs: "flex", md: "none" } }}>
+        <Card elevation={0} sx={{ width: "100%", maxWidth: 420, bgcolor: "transparent", color: "white" }}>
+          <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2.5, display: { xs: "flex", md: "none" } }}>
             <LogoIcon sx={{ color: "#4caf50", fontSize: 32 }} />
             <Typography variant="h5" fontWeight={800}>PEAK INVESTMENTS</Typography>
           </Stack>
 
-          <Stack spacing={1} sx={{ mb: 3 }}>
+          <Stack spacing={0.5} sx={{ mb: 3 }}>
             <Typography variant="h4" fontWeight={700}>Crear Cuenta</Typography>
-            <Typography variant="body2" color="gray">Completá los datos para comenzar tu experiencia.</Typography>
+            <Typography variant="body2" color="gray">Completá tus datos para abrir tu cuenta comitente.</Typography>
           </Stack>
 
           {errorMsg && (
@@ -147,14 +172,14 @@ function RegisterPage() {
           )}
 
           <Box component="form" onSubmit={handleSubmit}>
-            <Stack spacing={2.5}>
+            <Stack spacing={2}>
               <TextField
-                label="Usuario"
-                name="username"
+                label="Nombre Completo"
+                name="full_name"
                 variant="outlined"
                 fullWidth
                 required
-                value={formData.username}
+                value={formData.full_name}
                 onChange={handleChange}
                 slotProps={{
                   inputLabel: { style: { color: "#9ca3af" } },
@@ -171,11 +196,35 @@ function RegisterPage() {
               />
 
               <TextField
-                label="Email (opcional)"
+                label="Número de DNI"
+                name="dni"
+                variant="outlined"
+                fullWidth
+                required
+                value={formData.dni}
+                onChange={handleChange}
+                placeholder="ej: 38123456"
+                slotProps={{
+                  inputLabel: { style: { color: "#9ca3af" } },
+                  htmlInput: { style: { color: "white" } }
+                }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    backgroundColor: "#15181e",
+                    "& fieldset": { borderColor: "#2d3748" },
+                    "&:hover fieldset": { borderColor: "#4caf50" },
+                    "&.Mui-focused fieldset": { borderColor: "#4caf50" }
+                  }
+                }}
+              />
+
+              <TextField
+                label="Correo Electrónico"
                 name="email"
                 type="email"
                 variant="outlined"
                 fullWidth
+                required
                 value={formData.email}
                 onChange={handleChange}
                 slotProps={{
@@ -258,13 +307,14 @@ function RegisterPage() {
                   color: "black",
                   fontWeight: 700,
                   py: 1.5,
+                  mt: 1,
                   fontSize: "1rem",
                   "&:hover": { bgcolor: "#388e3c" },
                   textTransform: "none",
                   borderRadius: 1.5
                 }}
               >
-                {loading ? "Creando cuenta..." : "Registrarme"}
+                {loading ? "Creando cuenta comitente..." : "Abrir Cuenta Comitente"}
               </Button>
             </Stack>
           </Box>

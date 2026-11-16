@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 
 import {
@@ -12,24 +12,44 @@ import {
 } from "@tanstack/react-query";
 
 import App from "./App";
-import theme from "./theme/theme";
-// ➔ 1. IMPORTAMOS NUESTRO PROVEEDOR DE MERCADO REAL
+import { getAppTheme } from "./theme/theme";
 import { MarketProvider } from "./context/market-context.jsx";
 
 const queryClient = new QueryClient();
+
+function RootApp() {
+  const [currentMode, setCurrentMode] = useState(() => {
+    return localStorage.getItem("theme") === "light" ? "light" : "dark";
+  });
+
+  useEffect(() => {
+    const syncTheme = () => {
+      const mode = localStorage.getItem("theme") === "light" ? "light" : "dark";
+      setCurrentMode(mode);
+    };
+
+    window.addEventListener("storage", syncTheme);
+    return () => window.removeEventListener("storage", syncTheme);
+  }, []);
+
+  const theme = getAppTheme(currentMode);
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <MarketProvider>
+        <App />
+      </MarketProvider>
+    </ThemeProvider>
+  );
+}
 
 ReactDOM.createRoot(
   document.getElementById("root")
 ).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        {/* ➔ 2. ENVOLVEMOS EL APP CON EL MARKET PROVIDER */}
-        <MarketProvider>
-          <App />
-        </MarketProvider>
-      </ThemeProvider>
+      <RootApp />
     </QueryClientProvider>
   </React.StrictMode>
 );

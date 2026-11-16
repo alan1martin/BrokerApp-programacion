@@ -5,6 +5,8 @@ import { getAssetComposition, getPortfolioNews } from "../services/portfolio-ser
 import PortfolioPieChart from "../components/dashboard/portfolio-pie-chart";
 import NewspaperIcon from "@mui/icons-material/Newspaper";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import PieChartIcon from "@mui/icons-material/PieChart";
+import PageHeader from "../components/layout/page-header";
 
 const COLORS = ["#2196f3", "#9c27b0", "#ff9800", "#f44336", "#00bcd4", "#90a4ae"];
 
@@ -53,7 +55,7 @@ function CompositionPage() {
       try {
         const news = await getPortfolioNews();
         return news && news.length > 0 ? news : FALLBACK_NEWS;
-      } catch (e) {
+      } catch {
         return FALLBACK_NEWS;
       }
     },
@@ -73,15 +75,13 @@ function CompositionPage() {
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 }, bgcolor: "#0b0e11", minHeight: "100vh", color: "white" }}>
-      {/* Encabezado sin icono violeta */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight={800} sx={{ mb: 1 }}>
-          Composición de Activos
-        </Typography>
-        <Typography variant="body2" color="gray">
-          Visualizá la diversificación real y la distribución de tu patrimonio en el simulador.
-        </Typography>
-      </Box>
+      {/* Encabezado Estandarizado */}
+      <PageHeader
+        icon={PieChartIcon}
+        title="Composición de Activos"
+        subtitle="Visualizá la diversificación real y la distribución de tu patrimonio en el simulador."
+        iconColor="#9c27b0"
+      />
 
       {isLoading && (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
