@@ -10,7 +10,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import AddAlertIcon from "@mui/icons-material/AddAlert";
 import PageHeader from "../components/layout/page-header";
 
-const AVAILABLE_ASSETS = ["AAPL", "NVDA", "TSLA", "AL30", "G Galicia", "SPY"];
+const AVAILABLE_ASSETS = ["AAPL", "NVDA", "TSLA", "G Galicia", "SPY"];
 
 function StopLossAlertsPage() {
   const [tabIndex, setTabIndex] = useState(0);
@@ -25,12 +25,12 @@ function StopLossAlertsPage() {
     { id: 2, asset: "AAPL", type: "TAKE_PROFIT", triggerPrice: 240, quantity: 5, status: "Activa", date: "2026-10-23" }
   ]);
 
-  const [alertAsset, setAlertAsset] = useState("AL30");
+  const [alertAsset, setAlertAsset] = useState("NVDA");
   const [alertCondition, setAlertCondition] = useState("ABOVE");
-  const [alertTargetPrice, setAlertTargetPrice] = useState("65");
+  const [alertTargetPrice, setAlertTargetPrice] = useState("150");
 
   const [alerts, setAlerts] = useState([
-    { id: 1, asset: "AL30", condition: "Mayor a", targetPrice: 65, status: "Monitoreando" },
+    { id: 1, asset: "AAPL", condition: "Mayor a", targetPrice: 250, status: "Monitoreando" },
     { id: 2, asset: "TSLA", condition: "Menor a", targetPrice: 200, status: "Monitoreando" }
   ]);
 
@@ -100,7 +100,7 @@ function StopLossAlertsPage() {
       {tabIndex === 0 && (
         <Grid container spacing={3}>
           {/* Formulario */}
-          <Grid item xs={12} lg={4}>
+          <Grid size={{ xs: 12, lg: 4 }}>
             <Paper sx={{ bgcolor: "#15181e", border: "1px solid #1c2025", borderRadius: 2, p: 3, height: "100%" }}>
               <Typography variant="subtitle1" fontWeight={700} color="white" sx={{ mb: 3 }}>
                 Programar Orden Automática
@@ -167,7 +167,7 @@ function StopLossAlertsPage() {
           </Grid>
 
           {/* Tabla */}
-          <Grid item xs={12} lg={8}>
+          <Grid size={{ xs: 12, lg: 8 }}>
             <Paper sx={{ bgcolor: "#15181e", border: "1px solid #1c2025", borderRadius: 2, p: 3, height: "100%" }}>
               <Typography variant="subtitle1" fontWeight={700} color="white" sx={{ mb: 2 }}>
                 Órdenes Automáticas Programadas
@@ -225,7 +225,7 @@ function StopLossAlertsPage() {
       {tabIndex === 1 && (
         <Grid container spacing={3}>
           {/* Formulario */}
-          <Grid item xs={12} lg={4}>
+          <Grid size={{ xs: 12, lg: 4 }}>
             <Paper sx={{ bgcolor: "#15181e", border: "1px solid #1c2025", borderRadius: 2, p: 3, height: "100%" }}>
               <Typography variant="subtitle1" fontWeight={700} color="white" sx={{ mb: 3 }}>
                 Crear Alerta de Precio
@@ -283,7 +283,7 @@ function StopLossAlertsPage() {
           </Grid>
 
           {/* Tabla */}
-          <Grid item xs={12} lg={8}>
+          <Grid size={{ xs: 12, lg: 8 }}>
             <Paper sx={{ bgcolor: "#15181e", border: "1px solid #1c2025", borderRadius: 2, p: 3, height: "100%" }}>
               <Typography variant="subtitle1" fontWeight={700} color="white" sx={{ mb: 2 }}>
                 Alertas Activas

@@ -12,8 +12,7 @@ const TICKER_SYMBOLS = [
   { symbol: "BTC", name: "Bitcoin", fallbackPrice: 65000.00, change: 2.15 },
   { symbol: "AMZN", name: "Amazon", fallbackPrice: 185.30, change: 0.95 },
   { symbol: "GGAL", name: "Grupo Galicia", fallbackPrice: 42.50, change: 4.10 },
-  { symbol: "AL30", name: "Bono AL30", fallbackPrice: 58.40, change: 1.80 },
-  { symbol: "ETH", name: "Ethereum", fallbackPrice: 3450.00, change: -1.10 }
+  { symbol: "ETH", name: "Ethereum", fallbackPrice: 3450.00, change: -1.10 },
 ];
 
 export default function MarketTicker() {
@@ -69,9 +68,9 @@ export default function MarketTicker() {
           <Stack
             key={`${item.symbol}-${index}`}
             direction="row"
-            alignItems="center"
             spacing={1.2}
             sx={{
+              alignItems: "center",
               px: 2.2,
               py: 0.2,
               borderRight: "1px solid rgba(255, 255, 255, 0.06)",
@@ -100,7 +99,7 @@ export default function MarketTicker() {
               ${item.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </Typography>
 
-            <Stack direction="row" alignItems="center" spacing={0.2}>
+            <Stack direction="row" spacing={0.2} sx={{ alignItems: "center" }}>
               {item.isPositive ? (
                 <ArrowDropUpIcon sx={{ color: "#4caf50", fontSize: 20 }} />
               ) : (

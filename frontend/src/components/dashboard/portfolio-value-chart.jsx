@@ -96,7 +96,7 @@ function PortfolioValueChart({ totalValue }) {
 
   return (
     <Box sx={{ width: "100%", height: 290, mt: 1 }}>
-      <Stack direction="row" justifyContent="flex-end" sx={{ mb: 1 }}>
+      <Stack direction="row" sx={{ justifyContent: "flex-end", mb: 1 }}>
         <ButtonGroup size="small" variant="outlined" sx={{ borderColor: "#2d3748" }}>
           {["1S", "1M", "1A"].map((tf) => (
             <Button

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Box, Typography, Paper, Grid, Stack, Slider, TextField, InputAdornment, Divider } from "@mui/material";
+import { Box, Typography, Paper, Grid, Stack, Slider, TextField, InputAdornment } from "@mui/material";
 import Chart from "react-apexcharts";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import SavingsIcon from "@mui/icons-material/Savings";
@@ -131,8 +131,14 @@ function WealthProjectionPage() {
                   type="number"
                   value={initialCapital}
                   onChange={(e) => setInitialCapital(Number(e.target.value))}
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start"><AccountBalanceIcon sx={{ color: "gray", fontSize: 18 }} /></InputAdornment>,
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <AccountBalanceIcon sx={{ color: "gray", fontSize: 18 }} />
+                        </InputAdornment>
+                      )
+                    }
                   }}
                   sx={{ input: { color: "white", fontWeight: 700 }, bgcolor: "#0b0e11", borderRadius: 1, "& .MuiOutlinedInput-notchedOutline": { borderColor: "#1c2025" } }}
                 />
@@ -147,8 +153,14 @@ function WealthProjectionPage() {
                   type="number"
                   value={monthlyContribution}
                   onChange={(e) => setMonthlyContribution(Number(e.target.value))}
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start"><SavingsIcon sx={{ color: "gray", fontSize: 18 }} /></InputAdornment>,
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SavingsIcon sx={{ color: "gray", fontSize: 18 }} />
+                        </InputAdornment>
+                      )
+                    }
                   }}
                   sx={{ input: { color: "white", fontWeight: 700 }, bgcolor: "#0b0e11", borderRadius: 1, "& .MuiOutlinedInput-notchedOutline": { borderColor: "#1c2025" } }}
                 />
@@ -156,7 +168,7 @@ function WealthProjectionPage() {
 
               {/* Horizonte Temporal (Años) */}
               <Box>
-                <Stack direction="row" justifyContent="space-between" sx={{ mb: 1 }}>
+                <Stack direction="row" sx={{ justifyContent: "space-between", mb: 1 }}>
                   <Typography variant="body2" color="gray">Horizonte Temporal</Typography>
                   <Typography variant="body2" fontWeight={700} color="#2196f3">{years} Años</Typography>
                 </Stack>
@@ -172,7 +184,7 @@ function WealthProjectionPage() {
 
               {/* Tasa Anual Estimada */}
               <Box>
-                <Stack direction="row" justifyContent="space-between" sx={{ mb: 1 }}>
+                <Stack direction="row" sx={{ justifyContent: "space-between", mb: 1 }}>
                   <Typography variant="body2" color="gray">Retorno Anual Estimado</Typography>
                   <Typography variant="body2" fontWeight={700} color="#4caf50">{annualRate}%</Typography>
                 </Stack>

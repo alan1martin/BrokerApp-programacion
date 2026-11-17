@@ -1,3 +1,4 @@
+// src/components/layout/dashboard-layout.jsx
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { 
@@ -16,7 +17,6 @@ import Settings from "@mui/icons-material/Settings";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import FiberManualRecord from "@mui/icons-material/FiberManualRecord";
-import AccountCircle from "@mui/icons-material/AccountCircle";
 import AccountBox from "@mui/icons-material/AccountBox";
 import Shield from "@mui/icons-material/Shield";
 import Help from "@mui/icons-material/Help"; 
@@ -290,7 +290,7 @@ function DashboardLayout() {
       >
         <Toolbar sx={{ display: "flex", justifyContent: "space-between", px: "24px !important" }}>
           
-          <Stack direction="row" alignItems="center" spacing={1.5}>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
             <IconButton
               color="inherit"
               aria-label="open drawer"
@@ -307,10 +307,10 @@ function DashboardLayout() {
 
             <Stack 
               direction="row" 
-              alignItems="center" 
               spacing={1.5} 
               onClick={() => navigate("/")}
               sx={{ 
+                alignItems: "center",
                 cursor: "pointer",
                 transition: "opacity 0.2s",
                 "&:hover": { opacity: 0.85 }
@@ -326,13 +326,13 @@ function DashboardLayout() {
           </Stack>
 
           {/* Menú de Usuario en Esquina Superior Derecha */}
-          <Stack direction="row" alignItems="center" spacing={1.5}>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
             <Stack 
               direction="row" 
-              alignItems="center" 
               spacing={1.5} 
               onClick={handleMenuOpen} 
               sx={{ 
+                alignItems: "center",
                 cursor: 'pointer', 
                 p: 0.8, 
                 px: 1.5,
@@ -363,28 +363,30 @@ function DashboardLayout() {
               open={Boolean(anchorEl)}
               onClose={handleMenuClose}
               disableScrollLock
-              PaperProps={{
-                sx: { 
-                  bgcolor: isDarkMode ? "#15181e" : "#ffffff", 
-                  color: isDarkMode ? "white" : "#0f172a", 
-                  border: isDarkMode ? "1px solid #1c2025" : "1px solid #e2e8f0", 
-                  mt: 1.5,
-                  minWidth: 280,
-                  maxWidth: 340,
-                  borderRadius: 2,
-                  boxShadow: isDarkMode ? "0px 10px 30px rgba(0,0,0,0.6)" : "0px 10px 30px rgba(0,0,0,0.08)",
-                  "& .MuiMenuItem-root": {
-                    fontSize: "0.88rem",
-                    py: 1.2,
-                    color: isDarkMode ? "#9ca3af" : "#475569",
-                    "&:hover": { bgcolor: isDarkMode ? "#1c2025" : "#f1f5f9", color: isDarkMode ? "white" : "#0f172a" }
+              slotProps={{
+                paper: {
+                  sx: { 
+                    bgcolor: isDarkMode ? "#15181e" : "#ffffff", 
+                    color: isDarkMode ? "white" : "#0f172a", 
+                    border: isDarkMode ? "1px solid #1c2025" : "1px solid #e2e8f0", 
+                    mt: 1.5,
+                    minWidth: 280,
+                    maxWidth: 340,
+                    borderRadius: 2,
+                    boxShadow: isDarkMode ? "0px 10px 30px rgba(0,0,0,0.6)" : "0px 10px 30px rgba(0,0,0,0.08)",
+                    "& .MuiMenuItem-root": {
+                      fontSize: "0.88rem",
+                      py: 1.2,
+                      color: isDarkMode ? "#9ca3af" : "#475569",
+                      "&:hover": { bgcolor: isDarkMode ? "#1c2025" : "#f1f5f9", color: isDarkMode ? "white" : "#0f172a" }
+                    }
                   }
                 }
               }}
             >
               {/* Tarjeta de Identificación del Usuario y Cuenta Comitente */}
               <Box sx={{ px: 2.5, py: 2 }}>
-                <Stack direction="row" spacing={1.5} alignItems="center">
+                <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
                   <Avatar sx={{ width: 44, height: 44, bgcolor: "rgba(76, 175, 80, 0.15)", border: "1px solid #4caf50", color: "#4caf50", fontWeight: 700 }}>
                     {displayedUserName.charAt(0).toUpperCase()}
                   </Avatar>

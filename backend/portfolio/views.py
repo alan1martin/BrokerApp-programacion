@@ -88,6 +88,8 @@ def get_stock_history(request, symbol):
         ticker_symbol = symbol.upper()
         if ticker_symbol in ['BTC', 'ETH', 'SOL']:
             ticker_symbol = f"{ticker_symbol}-USD"
+        elif ticker_symbol in ['AL30', 'GD30']:
+            ticker_symbol = f"{ticker_symbol}.BA"
 
         ticker = yf.Ticker(ticker_symbol)
         hist = ticker.history(period="7d", interval="15m")
@@ -163,6 +165,8 @@ class PortfolioDetailView(APIView):
                 symbol_yf = pos.symbol.upper()
                 if symbol_yf in ['BTC', 'ETH', 'SOL']:
                     symbol_yf = f"{symbol_yf}-USD"
+                elif symbol_yf in ['AL30', 'GD30']:
+                    symbol_yf = f"{symbol_yf}.BA"
 
                 ticker = yf.Ticker(symbol_yf)
                 fast_info = ticker.fast_info
@@ -333,6 +337,8 @@ class AssetCompositionView(APIView):
                     symbol_yf = pos.symbol.upper()
                     if symbol_yf in ['BTC', 'ETH', 'SOL']:
                         symbol_yf = f"{symbol_yf}-USD"
+                    elif symbol_yf in ['AL30', 'GD30']:
+                        symbol_yf = f"{symbol_yf}.BA"
                         
                     ticker = yf.Ticker(symbol_yf)
                     fast_info = ticker.fast_info
@@ -378,7 +384,7 @@ class MarketQuotesView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        tickers_to_track = ["AAPL", "NVDA", "TSLA", "AMZN", "BTC", "ETH"]
+        tickers_to_track = ["AAPL", "NVDA", "TSLA", "AMZN", "BTC", "ETH", "GGAL"]
         market_data = []
         
         for symbol in tickers_to_track:
@@ -386,6 +392,8 @@ class MarketQuotesView(APIView):
                 symbol_yf = symbol.upper()
                 if symbol_yf in ['BTC', 'ETH', 'SOL']:
                     symbol_yf = f"{symbol_yf}-USD"
+                elif symbol_yf in ['AL30', 'GD30']:
+                    symbol_yf = f"{symbol_yf}.BA"
                 
                 ticker = yf.Ticker(symbol_yf)
                 fast_info = ticker.fast_info
@@ -453,7 +461,7 @@ def get_portfolio_news(request):
             for symbol in tickers:
                 if len(compiled_news) >= 8:
                     break
-                symbol_yf = f"{symbol}-USD" if symbol in ['BTC', 'ETH', 'SOL'] else symbol
+                symbol_yf = f"{symbol}-USD" if symbol in ['BTC', 'ETH', 'SOL'] else (f"{symbol}.BA" if symbol in ['AL30', 'GD30'] else symbol)
                 try:
                     ticker_obj = yf.Ticker(symbol_yf)
                     ticker_news = ticker_obj.news

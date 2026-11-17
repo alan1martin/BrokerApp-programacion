@@ -20,9 +20,9 @@ const FALLBACK_NEWS = [
     providerPublishTime: Math.floor(Date.now() / 1000) - 3600
   },
   {
-    title: "Los bonos soberanos argentinos en dólares registran alzas impulsadas por superávit fiscal",
+    title: "Grupo Financiero Galicia reporta sólidos resultados en su último balance trimestral",
     publisher: "Ámbito Financiero",
-    related_ticker: "AL30",
+    related_ticker: "GGAL",
     link: "https://www.ambito.com",
     providerPublishTime: Math.floor(Date.now() / 1000) - 7200
   },
@@ -140,7 +140,7 @@ function CompositionPage() {
                           }}
                         >
                           {/* Izquierda: Indicador, Título y Subtítulo */}
-                          <Stack direction="row" alignItems="flex-start" spacing={1.5}>
+                          <Stack direction="row" spacing={1.5} sx={{ alignItems: "flex-start" }}>
                             <Box sx={{ width: 10, height: 10, bgcolor: itemColor, borderRadius: "50%", mt: 0.6 }} />
                             <Stack spacing={0.3}>
                               <Typography variant="body2" fontWeight={700} color="white" sx={{ lineHeight: 1.2 }}>
@@ -153,7 +153,7 @@ function CompositionPage() {
                           </Stack>
 
                           {/* Derecha: Monto y Porcentaje bien alineados sin solaparse */}
-                          <Stack alignItems="flex-end" spacing={0.3} sx={{ minWidth: 100, flexShrink: 0 }}>
+                          <Stack spacing={0.3} sx={{ alignItems: "flex-end", minWidth: 100, flexShrink: 0 }}>
                             <Typography variant="body2" fontWeight={700} color="white" sx={{ lineHeight: 1.2 }}>
                               ${asset.value.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
                             </Typography>
@@ -179,7 +179,7 @@ function CompositionPage() {
           {/* Fila 2: Sección de Noticias del Mercado */}
           <Grid size={{ xs: 12 }}>
             <Box sx={{ mt: 1 }}>
-              <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2 }}>
+              <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 2 }}>
                 <NewspaperIcon sx={{ color: "#ff9800", fontSize: 22 }} />
                 <Typography variant="h6" fontWeight={700}>
                   Noticias Macroeconómicas y de tus Activos
@@ -216,7 +216,7 @@ function CompositionPage() {
                           }}
                         >
                           <Box>
-                            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+                            <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 1 }}>
                               <Typography variant="caption" color="#ff9800" fontWeight={700}>
                                 {item.publisher}
                               </Typography>
@@ -234,7 +234,7 @@ function CompositionPage() {
                             </Typography>
                           </Box>
 
-                          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 1 }}>
+                          <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mt: 1 }}>
                             <Typography variant="caption" color="gray">
                               {item.providerPublishTime > 0 
                                 ? new Date(item.providerPublishTime * 1000).toLocaleDateString("es-AR") 
