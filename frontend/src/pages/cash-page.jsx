@@ -89,12 +89,14 @@ function CashDialog({ open, onClose, onSuccess }) {
       onClose={onClose} 
       maxWidth="sm" 
       fullWidth
-      PaperProps={{
-        sx: { 
-          backgroundColor: "#15181e", 
-          color: "white", 
-          borderRadius: 3,
-          border: "1px solid #1c2025"
+      slotProps={{
+        paper: {
+          sx: { 
+            backgroundColor: "#15181e", 
+            color: "white", 
+            borderRadius: 3,
+            border: "1px solid #1c2025"
+          }
         }
       }}
     >
@@ -122,7 +124,7 @@ function CashDialog({ open, onClose, onSuccess }) {
         {tabValue === 0 && (
           <Stack spacing={3}>
             <Box sx={{ p: 2.5, bgcolor: "#0b0e11", borderRadius: 2, border: "1px solid #1c2025" }}>
-              <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2 }}>
+              <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 2 }}>
                 <AccountBalanceIcon sx={{ color: "#4caf50" }} />
                 <Typography variant="subtitle1" fontWeight={700}>Datos para tu transferencia</Typography>
               </Stack>
@@ -172,11 +174,13 @@ function CashDialog({ open, onClose, onSuccess }) {
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                InputProps={{
-                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                  sx: { color: "white", bgcolor: "#0b0e11" }
+                slotProps={{
+                  input: {
+                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                    sx: { color: "white", bgcolor: "#0b0e11" }
+                  },
+                  inputLabel: { style: { color: "gray" } }
                 }}
-                InputLabelProps={{ style: { color: "gray" } }}
                 sx={{ mb: 2 }}
               />
               <Button 
@@ -207,8 +211,10 @@ function CashDialog({ open, onClose, onSuccess }) {
                 placeholder="ej: mi.alias.personal"
                 value={destination}
                 onChange={(e) => setDestination(e.target.value)}
-                InputProps={{ sx: { color: "white", bgcolor: "#0b0e11" } }}
-                InputLabelProps={{ style: { color: "gray" } }}
+                slotProps={{
+                  input: { sx: { color: "white", bgcolor: "#0b0e11" } },
+                  inputLabel: { style: { color: "gray" } }
+                }}
                 required
               />
 
@@ -218,8 +224,10 @@ function CashDialog({ open, onClose, onSuccess }) {
                 placeholder="ej: Juan Pérez"
                 value={holderName}
                 onChange={(e) => setHolderName(e.target.value)}
-                InputProps={{ sx: { color: "white", bgcolor: "#0b0e11" } }}
-                InputLabelProps={{ style: { color: "gray" } }}
+                slotProps={{
+                  input: { sx: { color: "white", bgcolor: "#0b0e11" } },
+                  inputLabel: { style: { color: "gray" } }
+                }}
                 required
               />
 
@@ -229,11 +237,13 @@ function CashDialog({ open, onClose, onSuccess }) {
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                InputProps={{
-                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                  sx: { color: "white", bgcolor: "#0b0e11" }
+                slotProps={{
+                  input: {
+                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                    sx: { color: "white", bgcolor: "#0b0e11" }
+                  },
+                  inputLabel: { style: { color: "gray" } }
                 }}
-                InputLabelProps={{ style: { color: "gray" } }}
                 required
               />
 

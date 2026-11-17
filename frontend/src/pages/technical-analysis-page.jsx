@@ -5,16 +5,43 @@ import PageHeader from "../components/layout/page-header";
 
 // Mapeo de tickers a símbolos compatibles con TradingView
 const SYMBOL_MAP = {
-  NVDA: "NASDAQ:NVDA",
-  AAPL: "NASDAQ:AAPL",
-  TSLA: "NASDAQ:TSLA",
-  MSFT: "NASDAQ:MSFT",
-  AMZN: "NASDAQ:AMZN",
+  NVDA : "NASDAQ:NVDA",
+  AAPL : "NASDAQ:AAPL",
+  TSLA : "NASDAQ:TSLA",
+  MSFT : "NASDAQ:MSFT",
+  AMZN : "NASDAQ:AMZN",
   GOOGL: "NASDAQ:GOOGL",
-  SPY: "AMEX:SPY",
-  QQQ: "NASDAQ:QQQ",
-  AL30: "BCBA:AL30"
+  SPY  : "AMEX:SPY",
+  QQQ  : "NASDAQ:QQQ",
 };
+
+// Monta un widget de TradingView dentro de un contenedor.
+// Devuelve una función de limpieza segura (cancela la inyección si aún no ocurrió).
+function mountTradingViewWidget(container, scriptSrc, config) {
+  // Se difiere la inyección: si React desmonta enseguida (StrictMode o cambio rápido
+  // de símbolo), el timeout se cancela y el script nunca llega a insertarse.
+  const timeoutId = setTimeout(() => {
+    container.innerHTML = "";
+
+    const widgetDiv = document.createElement("div");
+    widgetDiv.className = "tradingview-widget-container__widget";
+    widgetDiv.style.height = "100%";
+    widgetDiv.style.width = "100%";
+    container.appendChild(widgetDiv);
+
+    const script = document.createElement("script");
+    script.src = scriptSrc;
+    script.type = "text/javascript";
+    script.async = true;
+    script.innerHTML = JSON.stringify(config);
+    container.appendChild(script);
+  }, 150);
+
+  return () => {
+    clearTimeout(timeoutId);
+    container.innerHTML = "";
+  };
+}
 
 function TechnicalAnalysisPage() {
   const [selectedTicker, setSelectedTicker] = useState("NVDA");
@@ -25,52 +52,48 @@ function TechnicalAnalysisPage() {
 
   // Carga del Gráfico Interactivo Principal de TradingView
   useEffect(() => {
-    if (!chartContainerRef.current) return;
-    chartContainerRef.current.innerHTML = "";
+    const container = chartContainerRef.current;
+    if (!container) return;
 
-    const script = document.createElement("script");
-    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
-    script.type = "text/javascript";
-    script.async = true;
-    script.innerHTML = JSON.stringify({
-      autosize: true,
-      symbol: tvSymbol,
-      interval: "D",
-      timezone: "America/Argentina/Buenos_Aires",
-      theme: "dark",
-      style: "1", // Velas japonesas
-      locale: "es",
-      enable_publishing: false,
-      allow_symbol_change: false,
-      calendar: false,
-      support_host: "https://www.tradingview.com"
-    });
-
-    chartContainerRef.current.appendChild(script);
+    return mountTradingViewWidget(
+      container,
+      "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js",
+      {
+        autosize: true,
+        symbol: tvSymbol,
+        interval: "D",
+        timezone: "America/Argentina/Buenos_Aires",
+        theme: "dark",
+        style: "1", // Velas japonesas
+        locale: "es",
+        enable_publishing: false,
+        allow_symbol_change: false,
+        calendar: false,
+        support_host: "https://www.tradingview.com"
+      }
+    );
   }, [tvSymbol]);
 
   // Carga del Widget Velocímetro (Resumen de Indicadores Técnicos)
   useEffect(() => {
-    if (!gaugeContainerRef.current) return;
-    gaugeContainerRef.current.innerHTML = "";
+    const container = gaugeContainerRef.current;
+    if (!container) return;
 
-    const script = document.createElement("script");
-    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js";
-    script.type = "text/javascript";
-    script.async = true;
-    script.innerHTML = JSON.stringify({
-      interval: "1D",
-      width: "100%",
-      isTransparent: true,
-      height: "100%",
-      symbol: tvSymbol,
-      showIntervalTabs: true,
-      displayMode: "single",
-      locale: "es",
-      colorTheme: "dark"
-    });
-
-    gaugeContainerRef.current.appendChild(script);
+    return mountTradingViewWidget(
+      container,
+      "https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js",
+      {
+        interval: "1D",
+        width: "100%",
+        isTransparent: true,
+        height: "100%",
+        symbol: tvSymbol,
+        showIntervalTabs: true,
+        displayMode: "single",
+        locale: "es",
+        colorTheme: "dark"
+      }
+    );
   }, [tvSymbol]);
 
   return (
@@ -129,7 +152,6 @@ function TechnicalAnalysisPage() {
 
         {/* Columna Derecha: Resumen de Señales / Velocímetro */}
         <Grid size={{ xs: 12, lg: 4 }} sx={{ pt: { xs: 3, lg: 0 } }}>
-          {/* Espaciador superior equivalente al alto del selector para mantener alineación de tarjetas */}
           <Box sx={{ height: { lg: 40 }, display: { xs: "none", lg: "block" } }} />
           
           <Card sx={{ bgcolor: "#15181e", border: "1px solid #1c2025", borderRadius: 1, height: 600, width: "100%" }}>

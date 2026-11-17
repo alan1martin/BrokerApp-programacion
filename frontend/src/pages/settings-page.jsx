@@ -231,7 +231,13 @@ function SettingsPage({ loadingMarket }) {
                       onChange={(e) => setProfileData({ ...profileData, investorType: e.target.value })}
                       label="Tipo de Inversor"
                       sx={{ color: isDark ? "white" : "#0f172a", "& .MuiSvgIcon-root": { color: "#9ca3af" } }}
-                      MenuProps={{ PaperProps: { sx: { bgcolor: isDark ? "#15181e" : "#ffffff", color: isDark ? "white" : "#0f172a", border: "1px solid #1c2025" } } }}
+                      MenuProps={{
+                        slotProps: {
+                          paper: {
+                            sx: { bgcolor: isDark ? "#15181e" : "#ffffff", color: isDark ? "white" : "#0f172a", border: "1px solid #1c2025" }
+                          }
+                        }
+                      }}
                     >
                       <MenuItem value="Conservador">Conservador 🛡️ (Preservación de capital y renta fija)</MenuItem>
                       <MenuItem value="Moderado">Moderado ⚖️ (Equilibrio entre crecimiento y riesgo)</MenuItem>
@@ -257,7 +263,7 @@ function SettingsPage({ loadingMarket }) {
           <Grid size={{ xs: 12, lg: 5 }}>
             <Card sx={{ bgcolor: isDark ? "#15181e" : "#ffffff", border: isDark ? "1px solid #1c2025" : "1px solid #e2e8f0", borderRadius: 2, height: "100%" }}>
               <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
-                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2.5 }}>
+                <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 2.5 }}>
                   <Typography variant="h6" fontWeight={700} color="#4caf50">
                     Ficha Comitente
                   </Typography>
@@ -270,7 +276,7 @@ function SettingsPage({ loadingMarket }) {
                 </Stack>
 
                 <Box sx={{ p: 2.5, bgcolor: isDark ? "#0b0e11" : "#f1f5f9", borderRadius: 2, border: isDark ? "1px solid #1c2025" : "1px solid #e2e8f0", mb: 3 }}>
-                  <Typography variant="caption" color="gray" fontWeight={600} textTransform="uppercase" letterSpacing={0.5}>
+                  <Typography variant="caption" color="gray" fontWeight={600} letterSpacing={0.5} sx={{ textTransform: "uppercase" }}>
                     Número de Cuenta Comitente
                   </Typography>
                   <Typography variant="h4" fontWeight={900} color="#4caf50" sx={{ letterSpacing: 0.5, mt: 0.5 }}>
@@ -282,7 +288,7 @@ function SettingsPage({ loadingMarket }) {
                 </Box>
 
                 <Stack spacing={2}>
-                  <Stack direction="row" alignItems="center" spacing={1.5}>
+                  <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
                     <BadgeIcon sx={{ color: "#3b82f6", fontSize: 20 }} />
                     <Box>
                       <Typography variant="caption" color="gray">Titular Principal</Typography>
@@ -292,7 +298,7 @@ function SettingsPage({ loadingMarket }) {
 
                   <Divider sx={{ borderColor: isDark ? "#1c2025" : "#e2e8f0" }} />
 
-                  <Stack direction="row" alignItems="center" spacing={1.5}>
+                  <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
                     <EmailIcon sx={{ color: "#3b82f6", fontSize: 20 }} />
                     <Box>
                       <Typography variant="caption" color="gray">Email Registrado</Typography>
@@ -302,7 +308,7 @@ function SettingsPage({ loadingMarket }) {
 
                   <Divider sx={{ borderColor: isDark ? "#1c2025" : "#e2e8f0" }} />
 
-                  <Stack direction="row" alignItems="center" spacing={1.5}>
+                  <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
                     <AccountBalanceWalletIcon sx={{ color: "#4caf50", fontSize: 20 }} />
                     <Box>
                       <Typography variant="caption" color="gray">Moneda Base de Operación</Typography>
@@ -417,7 +423,13 @@ function SettingsPage({ loadingMarket }) {
                         onChange={handleLanguageChange} 
                         label="Idioma de la Interfaz" 
                         sx={{ color: isDark ? "white" : "#0f172a", "& .MuiSvgIcon-root": { color: "#9ca3af" } }}
-                        MenuProps={{ PaperProps: { sx: { bgcolor: isDark ? "#15181e" : "#ffffff", color: isDark ? "white" : "#0f172a", border: "1px solid #1c2025" } } }}
+                        MenuProps={{
+                          slotProps: {
+                            paper: {
+                              sx: { bgcolor: isDark ? "#15181e" : "#ffffff", color: isDark ? "white" : "#0f172a", border: "1px solid #1c2025" }
+                            }
+                          }
+                        }}
                       >
                         <MenuItem value="es">Español 🇦🇷 (Predeterminado)</MenuItem>
                         <MenuItem value="en">English 🇺🇸</MenuItem>
@@ -445,7 +457,18 @@ function SettingsPage({ loadingMarket }) {
                   <Typography variant="subtitle1" fontWeight={700} color="#f44336" sx={{ mb: 1.5 }}>
                     Zona de Peligro ⚠️
                   </Typography>
-                  <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ sm: "center" }} spacing={2} sx={{ bgcolor: "rgba(244, 67, 54, 0.05)", p: 2.5, borderRadius: 2, border: "1px solid rgba(244, 67, 54, 0.2)" }}>
+                  <Stack 
+                    direction={{ xs: "column", sm: "row" }} 
+                    spacing={2} 
+                    sx={{ 
+                      justifyContent: "space-between", 
+                      alignItems: { sm: "center" }, 
+                      bgcolor: "rgba(244, 67, 54, 0.05)", 
+                      p: 2.5, 
+                      borderRadius: 2, 
+                      border: "1px solid rgba(244, 67, 54, 0.2)" 
+                    }}
+                  >
                     <Stack>
                       <Typography fontWeight={700} color={isDark ? "white" : "#0f172a"} variant="body1">Reiniciar Simulador</Typography>
                       <Typography color={isDark ? "gray" : "#64748b"} variant="body2">Borra todo tu historial de transacciones ficticias y reestablece el saldo de tu cuenta comitente a $10,000 USD iniciales.</Typography>

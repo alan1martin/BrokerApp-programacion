@@ -81,9 +81,9 @@ function LoginPage() {
         <Stack spacing={4} sx={{ zIndex: 3, color: "white", maxWidth: "850px", width: "100%", pr: { md: 4 } }}>
           <Stack 
             direction="row" 
-            alignItems="center" 
             spacing={2}
             sx={{
+              alignItems: "center",
               animation: "revealBrand 1s ease-out forwards",
               "@keyframes revealBrand": {
                 "0%": { opacity: 0, transform: "translateY(15px)" },
@@ -143,7 +143,7 @@ function LoginPage() {
       >
         <Card elevation={0} sx={{ width: "100%", maxWidth: 380, bgcolor: "transparent", color: "white" }}>
           
-          <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 4, display: { xs: "flex", md: "none" } }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 4, display: { xs: "flex", md: "none" } }}>
             <LogoIcon sx={{ color: "#4caf50", fontSize: 32 }} />
             <Typography variant="h5" fontWeight={800}>PEAK INVESTMENTS</Typography>
           </Stack>

@@ -4,7 +4,7 @@ import { Box, Stack, Typography } from "@mui/material";
 export default function PageHeader({ icon: Icon, title, subtitle, iconColor = "#ff9800" }) {
   return (
     <Box sx={{ mb: 3 }}>
-      <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1 }}>
+      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 1 }}>
         {Icon && (
           <Box
             sx={{

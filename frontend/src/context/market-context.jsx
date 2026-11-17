@@ -13,10 +13,14 @@ export const useMarket = () => {
 };
 
 const INITIAL_ASSETS = [
-  { symbol: "AAPL", name: "Apple Inc.", currentPrice: 175.50, change24h: 1.2 },
-  { symbol: "TSLA", name: "Tesla Inc.", currentPrice: 180.20, change24h: -2.4 },
-  { symbol: "NVDA", name: "NVIDIA Corp.", currentPrice: 875.00, change24h: 5.8 },
-  { symbol: "BTC", name: "Bitcoin", currentPrice: 65000.00, change24h: 0.5 },
+  { symbol: "AAPL", name: "Apple Inc.", currentPrice: 175.50, change24h: 1.25 },
+  { symbol: "TSLA", name: "Tesla Inc.", currentPrice: 180.20, change24h: -0.85 },
+  { symbol: "NVDA", name: "NVIDIA Corp.", currentPrice: 875.00, change24h: 3.40 },
+  { symbol: "BTC", name: "Bitcoin", currentPrice: 65000.00, change24h: 2.15 },
+  { symbol: "AMZN", name: "Amazon.com Inc.", currentPrice: 185.30, change24h: 0.95 },
+  { symbol: "GGAL", name: "Grupo Galicia", currentPrice: 42.50, change24h: 4.10 },
+  { symbol: "AL30", name: "Bono AL30", currentPrice: 58.40, change24h: 1.80 },
+  { symbol: "ETH", name: "Ethereum", currentPrice: 3450.00, change24h: -1.10 },
 ];
 
 // Comprobación de horario de mercado tradicional
@@ -58,7 +62,7 @@ export function MarketProvider({ children }) {
     }
 
     try {
-      const symbolsToFetch = ["AAPL", "TSLA", "NVDA", "BTC"];
+      const symbolsToFetch = ["AAPL", "TSLA", "NVDA", "BTC", "AMZN", "GGAL", "ETH",];
       const mercadoAbierto = isTraditionalMarketOpen();
       
       const pricePromises = symbolsToFetch.map(async (symbol) => {

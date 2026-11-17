@@ -104,8 +104,14 @@ function CautionsPage() {
                   type="number"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start"><AccountBalanceWalletIcon sx={{ color: "gray", fontSize: 18 }} /></InputAdornment>,
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <AccountBalanceWalletIcon sx={{ color: "gray", fontSize: 18 }} />
+                        </InputAdornment>
+                      )
+                    }
                   }}
                   sx={{ input: { color: "white", fontWeight: 700 }, bgcolor: "#0b0e11", borderRadius: 1, "& .MuiOutlinedInput-notchedOutline": { borderColor: "#1c2025" } }}
                 />
@@ -114,11 +120,11 @@ function CautionsPage() {
               {/* Desglose de Retorno */}
               <Box sx={{ p: 2, bgcolor: "#0b0e11", borderRadius: 1.5, border: "1px solid #1c2025" }}>
                 <Stack spacing={1}>
-                  <Stack direction="row" justifyContent="space-between">
+                  <Stack direction="row" sx={{ justifyContent: "space-between" }}>
                     <Typography variant="caption" color="gray">Intereses Aportados ({selectedTerm.days}d):</Typography>
                     <Typography variant="caption" fontWeight={700} color="#4caf50">+${calculation.interest.toLocaleString("es-AR")}</Typography>
                   </Stack>
-                  <Stack direction="row" justifyContent="space-between">
+                  <Stack direction="row" sx={{ justifyContent: "space-between" }}>
                     <Typography variant="body2" fontWeight={700} color="white">Monto al Vencimiento:</Typography>
                     <Typography variant="body2" fontWeight={800} color="#2196f3">${calculation.totalAmount.toLocaleString("es-AR")}</Typography>
                   </Stack>
@@ -166,7 +172,7 @@ function CautionsPage() {
                       <TableCell>{row.expiry}</TableCell>
                       <TableCell align="right">
                         <Chip
-                          icon={<CheckCircleIcon style={{ fontSize: 14, color: "#4caf50" }} />}
+                          icon={<CheckCircleIcon sx={{ fontSize: "14px !important", color: "#4caf50 !important" }} />}
                           label={row.status}
                           size="small"
                           sx={{ bgcolor: "rgba(76, 175, 80, 0.15)", color: "#4caf50", fontWeight: 700, fontSize: "0.7rem" }}
