@@ -211,7 +211,7 @@ function DashboardLayout() {
 
           <ListItemButton onClick={() => { navigate("/cautions"); setMobileOpen(false); }} sx={{ py: 0.6 }}>
             <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#ff9800" }} />
-            <ListItemText primary="Cauciones (Tasa Fija)" slotProps={{ primary: { fontSize: "0.85rem" } }} />
+            <ListItemText primary="Cauciones" slotProps={{ primary: { fontSize: "0.85rem" } }} />
           </ListItemButton>
 
           <ListItemButton onClick={() => { navigate("/stop-loss-alerts"); setMobileOpen(false); }} sx={{ py: 0.6 }}>
@@ -239,7 +239,7 @@ function DashboardLayout() {
 
           <ListItemButton onClick={() => { navigate("/reports"); setMobileOpen(false); }} sx={{ py: 0.6 }}>
             <FiberManualRecord sx={{ fontSize: 6, mr: 1.5, color: "#9c27b0" }} />
-            <ListItemText primary="Reporte de Rendimiento" slotProps={{ primary: { fontSize: "0.85rem" } }} />
+            <ListItemText primary="Reportes de Rendimiento" slotProps={{ primary: { fontSize: "0.85rem" } }} />
           </ListItemButton>
 
           <ListItemButton onClick={() => { navigate("/history"); setMobileOpen(false); }} sx={{ py: 0.6 }}>

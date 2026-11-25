@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     # Apps locales
     'portfolio',
+    'market',
 ]
 
 MIDDLEWARE = [
@@ -156,3 +157,14 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+# ==================================================================================
+# Caches busqueda de activos
+# ================================================================================== 
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-market-cache',
+    }
+}
