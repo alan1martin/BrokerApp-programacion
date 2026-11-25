@@ -10,6 +10,7 @@ const TRADINGVIEW_MAP = {
   MSFT: "NASDAQ:MSFT",
   AMZN: "NASDAQ:AMZN",
   GOOGL: "NASDAQ:GOOGL",
+  META: "NASDAQ:META",
   BTC: "BINANCE:BTCUSDT",
   ETH: "BINANCE:ETHUSDT",
   SOL: "BINANCE:SOLUSDT",
@@ -17,22 +18,38 @@ const TRADINGVIEW_MAP = {
   QQQ: "NASDAQ:QQQ",
   DIA: "AMEX:DIA",
   GGAL: "NASDAQ:GGAL",
-  "G GALICIA": "NASDAQ:GGAL",
+  F: "NYSE:F",
+  KO: "NYSE:KO",
+  DIS: "NYSE:DIS",
+  BA: "NYSE:BA",
+  JPM: "NYSE:JPM",
+  V: "NYSE:V",
+  MA: "NYSE:MA",
+  WMT: "NYSE:WMT",
+  BABA: "NYSE:BABA",
 };
 
-function getTradingViewSymbol(symbol) {
+function getTradingViewSymbol(symbol, exchange) {
   if (!symbol) return "NASDAQ:AAPL";
   const clean = symbol.trim().toUpperCase();
   if (TRADINGVIEW_MAP[clean]) return TRADINGVIEW_MAP[clean];
   if (clean.includes("BTC")) return "BINANCE:BTCUSDT";
   if (clean.includes("ETH")) return "BINANCE:ETHUSDT";
   if (clean.includes("SOL")) return "BINANCE:SOLUSDT";
-  return `NASDAQ:${clean}`;
+
+  // Si nos viene el exchange desde el backend o search
+  const ex = (exchange || "").toUpperCase();
+  if (ex.includes("NYSE") || ex === "NYQ" || ex === "NYS") return `NYSE:${clean}`;
+  if (ex.includes("AMEX") || ex === "ASE") return `AMEX:${clean}`;
+  if (ex.includes("NASDAQ") || ex === "NMS" || ex === "NGM") return `NASDAQ:${clean}`;
+
+  // Si no tiene prefijo, TradingView acepta el ticker limpio y resuelve el exchange automáticamente
+  return clean;
 }
 
-function TradingChart({ symbol }) {
+function TradingChart({ symbol, exchange }) {
   const containerRef = useRef(null);
-  const tvSymbol = getTradingViewSymbol(symbol);
+  const tvSymbol = getTradingViewSymbol(symbol, exchange);
 
   useEffect(() => {
     const currentContainer = containerRef.current;

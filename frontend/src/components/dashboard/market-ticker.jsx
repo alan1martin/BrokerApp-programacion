@@ -6,12 +6,15 @@ import { useMarket } from "../../context/market-context.jsx";
 import { getAssetLogo } from "../../utils/get-logo";
 
 const TICKER_SYMBOLS = [
+  { symbol: "NVDA", name: "NVIDIA", fallbackPrice: 875.00, change: 3.40 },
   { symbol: "AAPL", name: "Apple", fallbackPrice: 175.50, change: 1.25 },
   { symbol: "TSLA", name: "Tesla", fallbackPrice: 180.20, change: -0.85 },
-  { symbol: "NVDA", name: "Nvidia", fallbackPrice: 875.00, change: 3.40 },
-  { symbol: "BTC", name: "Bitcoin", fallbackPrice: 65000.00, change: 2.15 },
+  { symbol: "MSFT", name: "Microsoft", fallbackPrice: 420.50, change: 1.15 },
   { symbol: "AMZN", name: "Amazon", fallbackPrice: 185.30, change: 0.95 },
-  { symbol: "GGAL", name: "Grupo Galicia", fallbackPrice: 42.50, change: 4.10 },
+  { symbol: "GOOGL", name: "Alphabet", fallbackPrice: 178.40, change: 0.80 },
+  { symbol: "META", name: "Meta", fallbackPrice: 495.20, change: 2.10 },
+  { symbol: "SPY", name: "S&P 500", fallbackPrice: 512.60, change: 0.45 },
+  { symbol: "BTC", name: "Bitcoin", fallbackPrice: 65000.00, change: 2.15 },
   { symbol: "ETH", name: "Ethereum", fallbackPrice: 3450.00, change: -1.10 },
 ];
 

@@ -13,13 +13,15 @@ export const useMarket = () => {
 };
 
 const INITIAL_ASSETS = [
+  { symbol: "NVDA", name: "NVIDIA Corp.", currentPrice: 875.00, change24h: 3.40 },
   { symbol: "AAPL", name: "Apple Inc.", currentPrice: 175.50, change24h: 1.25 },
   { symbol: "TSLA", name: "Tesla Inc.", currentPrice: 180.20, change24h: -0.85 },
-  { symbol: "NVDA", name: "NVIDIA Corp.", currentPrice: 875.00, change24h: 3.40 },
-  { symbol: "BTC", name: "Bitcoin", currentPrice: 65000.00, change24h: 2.15 },
+  { symbol: "MSFT", name: "Microsoft Corp.", currentPrice: 420.50, change24h: 1.15 },
   { symbol: "AMZN", name: "Amazon.com Inc.", currentPrice: 185.30, change24h: 0.95 },
-  { symbol: "GGAL", name: "Grupo Galicia", currentPrice: 42.50, change24h: 4.10 },
-  { symbol: "AL30", name: "Bono AL30", currentPrice: 58.40, change24h: 1.80 },
+  { symbol: "GOOGL", name: "Alphabet Inc.", currentPrice: 178.40, change24h: 0.80 },
+  { symbol: "META", name: "Meta Platforms", currentPrice: 495.20, change24h: 2.10 },
+  { symbol: "SPY", name: "S&P 500 ETF", currentPrice: 512.60, change24h: 0.45 },
+  { symbol: "BTC", name: "Bitcoin", currentPrice: 65000.00, change24h: 2.15 },
   { symbol: "ETH", name: "Ethereum", currentPrice: 3450.00, change24h: -1.10 },
 ];
 
@@ -62,17 +64,9 @@ export function MarketProvider({ children }) {
     }
 
     try {
-      const symbolsToFetch = ["AAPL", "TSLA", "NVDA", "BTC", "AMZN", "GGAL", "ETH",];
-      const mercadoAbierto = isTraditionalMarketOpen();
+      const symbolsToFetch = ["NVDA", "AAPL", "TSLA", "MSFT", "AMZN", "GOOGL", "META", "SPY", "BTC", "ETH"];
       
       const pricePromises = symbolsToFetch.map(async (symbol) => {
-        const esCrypto = symbol === "BTC";
-
-        // Si no es criptomoneda y el mercado tradicional está cerrado, retenemos el último precio conocido
-        if (!esCrypto && !mercadoAbierto) {
-          return { symbol, skipUpdate: true };
-        }
-
         try {
           const response = await api.get(`/portfolio/history/${symbol}/`);
           if (response.status === 200 && response.data) {
@@ -87,7 +81,7 @@ export function MarketProvider({ children }) {
             }
           }
         } catch {
-          // Captura silenciosa sin arrojar alertas ni provocar 401 en consola
+          // Si el servidor o la red fallan, conservamos el último precio conocido sin romper la UI
           return { symbol, skipUpdate: true };
         }
         return null;
