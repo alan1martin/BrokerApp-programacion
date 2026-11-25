@@ -1,5 +1,5 @@
 // src/components/dashboard/trading-chart.jsx
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, memo } from "react";
 import { Box } from "@mui/material";
 
 // Mapeo exhaustivo de activos a tickers oficiales compatibles con TradingView
@@ -16,7 +16,6 @@ const TRADINGVIEW_MAP = {
   SPY: "AMEX:SPY",
   QQQ: "NASDAQ:QQQ",
   DIA: "AMEX:DIA",
-  AL30: "BCBA:AL30",
   GGAL: "NASDAQ:GGAL",
   "G GALICIA": "NASDAQ:GGAL",
 };
@@ -39,42 +38,46 @@ function TradingChart({ symbol }) {
     const currentContainer = containerRef.current;
     if (!currentContainer) return;
 
-    // Limpiamos contenido previo para evitar duplicaciones
-    currentContainer.innerHTML = "";
+    // Se difiere la inyección: si React desmonta enseguida (StrictMode o cambio
+    // rápido de activo), el timeout se cancela y el script nunca llega a insertarse.
+    const timeoutId = setTimeout(() => {
+      // Limpiamos contenido previo para evitar duplicaciones
+      currentContainer.innerHTML = "";
 
-    const widgetDiv = document.createElement("div");
-    widgetDiv.className = "tradingview-widget-container__widget";
-    widgetDiv.style.height = "100%";
-    widgetDiv.style.width = "100%";
-    currentContainer.appendChild(widgetDiv);
+      // Contenedor interno que el script de TradingView busca mediante querySelector
+      const widgetDiv = document.createElement("div");
+      widgetDiv.className = "tradingview-widget-container__widget";
+      widgetDiv.style.height = "100%";
+      widgetDiv.style.width = "100%";
+      currentContainer.appendChild(widgetDiv);
 
-    const script = document.createElement("script");
-    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
-    script.type = "text/javascript";
-    script.async = true;
-    script.innerHTML = JSON.stringify({
-      autosize: true,
-      symbol: tvSymbol,
-      interval: "D",
-      timezone: "America/Argentina/Buenos_Aires",
-      theme: "dark",
-      style: "2", // Modo Gráfico de Líneas (Line Chart) oficial de TradingView
-      locale: "es",
-      enable_publishing: false,
-      hide_top_toolbar: false,
-      allow_symbol_change: false,
-      save_image: false,
-      calendar: false,
-      hide_volume: false,
-      support_host: "https://www.tradingview.com"
-    });
+      const script = document.createElement("script");
+      script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+      script.type = "text/javascript";
+      script.async = true;
+      script.innerHTML = JSON.stringify({
+        autosize: true,
+        symbol: tvSymbol,
+        interval: "D",
+        timezone: "America/Argentina/Buenos_Aires",
+        theme: "dark",
+        style: "2", // Modo Gráfico de Líneas (Line Chart) oficial de TradingView
+        locale: "es",
+        enable_publishing: false,
+        hide_top_toolbar: false,
+        allow_symbol_change: false,
+        save_image: false,
+        calendar: false,
+        hide_volume: false,
+        support_host: "https://www.tradingview.com"
+      });
 
-    currentContainer.appendChild(script);
+      currentContainer.appendChild(script);
+    }, 150);
 
     return () => {
-      if (currentContainer) {
-        currentContainer.innerHTML = "";
-      }
+      clearTimeout(timeoutId);
+      currentContainer.innerHTML = "";
     };
   }, [tvSymbol]);
 
@@ -99,4 +102,4 @@ function TradingChart({ symbol }) {
   );
 }
 
-export default TradingChart;
+export default memo(TradingChart);

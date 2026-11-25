@@ -1,4 +1,3 @@
-// src/pages/market-page.jsx
 import { useState, useEffect } from "react";
 import { 
   Typography, 
@@ -13,7 +12,13 @@ import {
   Button, 
   Chip,
   Box,
-  IconButton
+  IconButton,
+  Autocomplete,
+  TextField,
+  CircularProgress,
+  Grid,
+  Card,
+  CardContent
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useMarket } from "../context/market-context.jsx";
@@ -23,22 +28,38 @@ import BoltIcon from "@mui/icons-material/Bolt";
 import StarIcon from "@mui/icons-material/Star";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
 import QueryStatsIcon from "@mui/icons-material/QueryStats";
+import SearchIcon from "@mui/icons-material/Search";
 import PageHeader from "../components/layout/page-header";
 
 // Servicios de la API
-import { getFavorites, toggleFavorite } from "../services/market-service";
+import { getFavorites, toggleFavorite, searchAssets } from "../services/market-service";
+
+// Tarjetas de acceso rápido de los activos estrella
+const POPULAR_TICKERS = [
+  { ticker: "NVDA", name: "NVIDIA Corp" },
+  { ticker: "AAPL", name: "Apple Inc" },
+  { ticker: "TSLA", name: "Tesla Inc" },
+  { ticker: "MSFT", name: "Microsoft Corp" },
+  { ticker: "AMZN", name: "Amazon.com Inc" },
+  { ticker: "SPY",  name: "S&P 500 ETF" }
+];
 
 function MarketsPage() {
   const { assets } = useMarket();
   const navigate = useNavigate();
+
+  // Estados del Buscador
+  const [options, setOptions] = useState([]);
+  const [inputValue, setInputValue] = useState("");
+  const [loadingSearch, setLoadingSearch] = useState(false);
   
-  // Sincronizamos el estado inicial directamente con localStorage por las dudas
+  // Sincronizamos el estado inicial directamente con localStorage
   const [favorites, setFavorites] = useState(() => {
     const saved = localStorage.getItem("peak_favorites");
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Intentar cargar favoritos desde SQLite al montar. Si falla, el fallback de localStorage ya está listo.
+  // Intentar cargar favoritos desde SQLite al montar. Fallback local listo.
   useEffect(() => {
     async function loadFavorites() {
       try {
@@ -54,6 +75,34 @@ function MarketsPage() {
     loadFavorites();
   }, []);
 
+  // Buscador con Debounce de 250ms hacia la API de Django
+  useEffect(() => {
+    let active = true;
+
+    const fetchResults = async () => {
+      setLoadingSearch(true);
+      try {
+        const data = await searchAssets(inputValue);
+        if (active) {
+          setOptions(data.results || []);
+        }
+      } catch (err) {
+        console.error("Error buscando activos en el backend:", err);
+      } finally {
+        if (active) setLoadingSearch(false);
+      }
+    };
+
+    const timer = setTimeout(() => {
+      fetchResults();
+    }, 250);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [inputValue]);
+
   const handleTradeRedirect = (symbol) => {
     navigate("/trading", { state: { defaultSymbol: symbol } });
   };
@@ -62,12 +111,11 @@ function MarketsPage() {
   const handleToggleFavorite = async (symbol) => {
     const isCurrentlyFav = favorites.includes(symbol);
     
-    // Calculamos el próximo estado
     const nextFavorites = isCurrentlyFav 
       ? favorites.filter((fav) => fav !== symbol) 
       : [...favorites, symbol];
 
-    // 1. Actualizamos el estado de React y localStorage de inmediato para asegurar persistencia local
+    // 1. Actualizamos el estado de React y localStorage de inmediato
     setFavorites(nextFavorites);
     localStorage.setItem("peak_favorites", JSON.stringify(nextFavorites));
 
@@ -81,6 +129,7 @@ function MarketsPage() {
 
   return (
     <Stack spacing={3}>
+      {/* Encabezado Estandarizado */}
       <PageHeader
         icon={QueryStatsIcon}
         title="Mercados Financieros"
@@ -88,7 +137,110 @@ function MarketsPage() {
         iconColor="#2196f3"
       />
 
-      <TableContainer component={Paper} sx={{ backgroundColor: "#15181e", borderRadius: 2 }}>
+      {/* Sección Superior: Buscador y Más Operados */}
+      <Grid container spacing={3}>
+        {/* Buscador de Activos Dinámico */}
+        <Grid size={{ xs: 12, md: 5 }}>
+          <Paper sx={{ bgcolor: "#15181e", border: "1px solid #1c2025", borderRadius: 2, p: 2.5, height: "100%" }}>
+            <Typography variant="subtitle2" fontWeight={700} color="gray" sx={{ mb: 1.5, textTransform: "uppercase", letterSpacing: 0.5 }}>
+              Buscar Activo (Bolsa de EE. UU.)
+            </Typography>
+
+            <Autocomplete
+              options={options}
+              getOptionLabel={(option) => typeof option === "string" ? option : `${option.ticker} - ${option.name}`}
+              filterOptions={(x) => x}
+              onInputChange={(event, newInputValue) => setInputValue(newInputValue)}
+              onChange={(event, newValue) => {
+                if (newValue) {
+                  const targetTicker = typeof newValue === "string" ? newValue : newValue.ticker;
+                  handleTradeRedirect(targetTicker);
+                }
+              }}
+              loading={loadingSearch}
+              renderInput={(params) => {
+                const { slotProps: ps, InputProps, inputProps, InputLabelProps, ...rest } = params;
+                const inputSlot = ps?.input ?? InputProps;
+                const htmlInputSlot = ps?.htmlInput ?? inputProps;
+                const labelSlot = ps?.inputLabel ?? InputLabelProps;
+
+                return (
+                  <TextField
+                    {...rest}
+                    placeholder="Ej: NVDA, Apple, Tesla..."
+                    size="small"
+                    slotProps={{
+                      ...ps,
+                      input: {
+                        ...inputSlot,
+                        startAdornment: (
+                          <>
+                            <SearchIcon sx={{ color: "gray", mr: 1, fontSize: 20 }} />
+                            {inputSlot?.startAdornment}
+                          </>
+                        ),
+                        endAdornment: (
+                          <>
+                            {loadingSearch ? <CircularProgress color="inherit" size={18} /> : null}
+                            {inputSlot?.endAdornment}
+                          </>
+                        )
+                      },
+                      htmlInput: htmlInputSlot,
+                      inputLabel: labelSlot
+                    }}
+                    sx={{
+                      input: { color: "white", fontWeight: 700 },
+                      bgcolor: "#0b0e11",
+                      borderRadius: 1,
+                      "& .MuiOutlinedInput-notchedOutline": { borderColor: "#1c2025" }
+                    }}
+                  />
+                );
+              }}
+            />
+          </Paper>
+        </Grid>
+
+        {/* Accesos Rápidos: Más Operados */}
+        <Grid size={{ xs: 12, md: 7 }}>
+          <Paper sx={{ bgcolor: "#15181e", border: "1px solid #1c2025", borderRadius: 2, p: 2.5 }}>
+            <Typography variant="subtitle2" fontWeight={700} color="gray" sx={{ mb: 1.5, textTransform: "uppercase", letterSpacing: 0.5 }}>
+              Más Operados
+            </Typography>
+
+            <Grid container spacing={1.5}>
+              {POPULAR_TICKERS.map((item) => (
+                <Grid size={{ xs: 6, sm: 4, md: 2 }} key={item.ticker}>
+                  <Card
+                    onClick={() => handleTradeRedirect(item.ticker)}
+                    sx={{
+                      bgcolor: "#0b0e11",
+                      border: "1px solid #1c2025",
+                      borderRadius: 1.5,
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                      "&:hover": { borderColor: "#2196f3", bgcolor: "rgba(33, 150, 243, 0.08)" }
+                    }}
+                  >
+                    <CardContent sx={{ p: "10px !important", textAlign: "center" }}>
+                      <Typography variant="body2" fontWeight={800} color="white">
+                        {item.ticker}
+                      </Typography>
+                      <Typography variant="caption" color="gray" noWrap display="block" sx={{ fontSize: "0.68rem" }}>
+                        {item.name}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </Paper>
+        </Grid>
+      </Grid>
+
+      {/* Tabla Principal de Cotizaciones */}
+      <TableContainer component={Paper} sx={{ backgroundColor: "#15181e", borderRadius: 2, border: "1px solid #1c2025" }}>
         <Table aria-label="tabla de mercados">
           <TableHead sx={{ backgroundColor: "#1e222b" }}>
             <TableRow>

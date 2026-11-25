@@ -24,6 +24,9 @@ export const getAssetLogo = (symbol) => {
     ETH: "https://assets.coingecko.com/coins/images/279/large/ethereum.png",
     SOL: "https://assets.coingecko.com/coins/images/4128/large/solana.png",
     USDT: "https://assets.coingecko.com/coins/images/325/large/tether.png",
+    // Cash / Dólares
+    CASH: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='50' fill='%231b281e'/><circle cx='50' cy='50' r='45' stroke='%234caf50' stroke-width='4' fill='none'/><text x='50%' y='68%' font-size='56' font-family='Arial, sans-serif' font-weight='bold' fill='%234caf50' text-anchor='middle'>$</text></svg>",
+    USD: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='50' fill='%231b281e'/><circle cx='50' cy='50' r='45' stroke='%234caf50' stroke-width='4' fill='none'/><text x='50%' y='68%' font-size='56' font-family='Arial, sans-serif' font-weight='bold' fill='%234caf50' text-anchor='middle'>$</text></svg>",
   };
 
   // Si el activo está en el mapa lo devuelve, sino genera un avatar con un color aleatorio basado en el símbolo

@@ -33,3 +33,33 @@ export const toggleFavorite = async (symbol) => {
     throw error;
   }
 };
+
+/**
+ * BUSCAR ACTIVOS EN EL MERCADO DE EE. UU. (MEMORIA / BACKEND)
+ * /api/market/search/?q=...
+ */
+export const searchAssets = async (query = "") => {
+  try {
+    const response = await api.get("market/search/", {
+      params: { q: query }
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error en searchAssets service:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+/**
+ * OBTENER DETALLE Y COTIZACIÓN EN TIEMPO REAL (CON CACHÉ EN BACKEND)
+ * /api/market/asset/<ticker>/
+ */
+export const getAssetDetail = async (ticker) => {
+  try {
+    const response = await api.get(`market/asset/${ticker}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error en getAssetDetail service:", error.response?.data || error.message);
+    throw error;
+  }
+};

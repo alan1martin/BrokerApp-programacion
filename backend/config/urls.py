@@ -23,6 +23,7 @@ urlpatterns = [
     path('api/register/', register_user, name='register_user'),
     path('api/user/me/', get_current_user_profile, name='current_user_profile'),
     path("api/portfolio/", include("portfolio.urls")),
+    path("api/market/", include("market.urls")),
     # Soporte para la ruta de favoritos llamada por el frontend en /api/markets/favorites/
     path("api/markets/favorites/", get_favorites, name='market-favorites'),
     path("api/markets/favorites/toggle/", toggle_favorite, name='market-favorites-toggle'),

@@ -1,12 +1,28 @@
 // frontend/src/pages/trading-page.jsx
-import { Grid, Typography, Card, CardContent, TextField, Button, Stack, Tabs, Tab, Box, MenuItem, Alert, CircularProgress } from "@mui/material";
+import { 
+  Grid, Typography, Card, CardContent, TextField, Button, Stack, 
+  Tabs, Tab, Box, MenuItem, Alert, CircularProgress, Autocomplete, Paper 
+} from "@mui/material";
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom"; 
 import { executeTrade } from "../services/portfolio-service";
+import { searchAssets } from "../services/market-service";
 import { useMarket } from "../context/market-context.jsx";
 import TradingChart from "../components/dashboard/trading-chart";
 import PageHeader from "../components/layout/page-header";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
+import SearchIcon from "@mui/icons-material/Search";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+
+// Lista de accesos rápidos para seleccionar activo con un solo clic
+const POPULAR_TICKERS = [
+  { ticker: "NVDA", name: "NVIDIA Corp" },
+  { ticker: "AAPL", name: "Apple Inc" },
+  { ticker: "TSLA", name: "Tesla Inc" },
+  { ticker: "MSFT", name: "Microsoft Corp" },
+  { ticker: "AMZN", name: "Amazon.com Inc" },
+  { ticker: "SPY",  name: "S&P 500 ETF" }
+];
 
 function TradingPage() {
   const { assets, loadingMarket } = useMarket();
@@ -17,6 +33,11 @@ function TradingPage() {
   const prevSymbolRef = useRef(location.state?.defaultSymbol);
   const [quantity, setQuantity] = useState("");
   
+  // Estados para el Buscador Dinámico con Autocomplete
+  const [searchOptions, setSearchOptions] = useState([]);
+  const [searchInputVal, setSearchInputVal] = useState("");
+  const [loadingSearch, setLoadingSearch] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null); 
 
@@ -27,8 +48,47 @@ function TradingPage() {
     }
   }, [location.state?.defaultSymbol]);
 
-  const currentAsset = assets.find(a => a.symbol === selectedSymbol);
-  
+  // Debounce para consultar al backend Django el catálogo en memoria sin sobrecargar a Yahoo
+  useEffect(() => {
+    let active = true;
+
+    const fetchSearchResults = async () => {
+      setLoadingSearch(true);
+      try {
+        const data = await searchAssets(searchInputVal);
+        if (active) {
+          setSearchOptions(data.results || []);
+        }
+      } catch (err) {
+        console.error("Error buscando activos para trading:", err);
+      } finally {
+        if (active) setLoadingSearch(false);
+      }
+    };
+
+    const timer = setTimeout(() => {
+      fetchSearchResults();
+    }, 250);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [searchInputVal]);
+
+  // Buscamos en el contexto o generamos un fallback dinámico si el ticker proviene de la búsqueda global
+  const foundAsset = assets.find(a => a.symbol === selectedSymbol);
+  const currentAsset = foundAsset || {
+    symbol: selectedSymbol,
+    name: selectedSymbol,
+    currentPrice: 150.00
+  };
+
+  // Garantizamos que el Select del formulario siempre contenga la opción seleccionada aunque venga de la búsqueda externa
+  const availableOptions = assets.some(a => a.symbol === selectedSymbol)
+    ? assets
+    : [...assets, { symbol: selectedSymbol, name: currentAsset.name }];
+
   const estimatedTotal = quantity && currentAsset 
     ? (parseFloat(quantity) * currentAsset.currentPrice).toFixed(2) 
     : "0.00";
@@ -42,7 +102,7 @@ function TradingPage() {
     setStatusMessage(null); 
   };
 
-  // MOTOR DE SIMULACIÓN LOCAL AUXILIAR (Modo Contingencia si el servidor está caído)
+  // MOTOR DE SIMULACIÓN LOCAL AUXILIAR
   const executeLocalSimulatedTrade = (tradeData) => {
     const localPortfolio = JSON.parse(localStorage.getItem("simulated_portfolio")) || { cash: 5000, total_value: 5000, positions: [] };
     const localHistory = JSON.parse(localStorage.getItem("simulated_history")) || [];
@@ -73,11 +133,9 @@ function TradingPage() {
       localPortfolio.cash += cost;
       existingPos.quantity = parseFloat(existingPos.quantity) - tradeData.quantity;
       
-      // Limpiamos posiciones vacías
       localPortfolio.positions = localPortfolio.positions.filter(p => parseFloat(p.quantity) > 0);
     }
 
-    // Guardar Historial
     localHistory.unshift({
       timestamp: new Date().toISOString(),
       symbol: tradeData.symbol,
@@ -103,19 +161,16 @@ function TradingPage() {
     };
 
     try {
-      // Intentamos pegarle a Django primero
       const response = await executeTrade(tradeData);
       setStatusMessage({ type: "success", text: response.message || "Operación procesada con éxito." });
       setQuantity(""); 
     } catch (error) {
-      // Si el backend respondió con un error de validación (saldo insuficiente, etc., 4xx)
       if (error.response && error.response.status >= 400 && error.response.status < 500) {
         const errorMsg = error.response.data?.error || error.response.data?.detail || error.message || "Error en los datos de la orden.";
         setStatusMessage({ type: "error", text: errorMsg });
-        return; // Cortamos acá para no ejecutar el fallback si fue rechazada
+        return;
       }
 
-      // En caso de que el backend no responda o sea un error de red
       console.warn("Backend inalcanzable. Derivando a simulación local de contingencia...");
       try {
         executeLocalSimulatedTrade(tradeData);
@@ -155,9 +210,122 @@ function TradingPage() {
         </Alert>
       )}
 
+      {/* Sección Superior: Buscador Inteligente y Accesos Rápidos (Más Operados) */}
+      <Grid container spacing={3}>
+        {/* Buscador Autocomplete */}
+        <Grid size={{ xs: 12, md: 5 }}>
+          <Paper sx={{ bgcolor: "#15181e", border: "1px solid #1c2025", borderRadius: 2, p: 2.5, height: "100%" }}>
+            <Typography variant="subtitle2" fontWeight={700} color="gray" sx={{ mb: 1.5, textTransform: "uppercase", letterSpacing: 0.5 }}>
+              Buscar Activo a Operar
+            </Typography>
+
+            <Autocomplete
+              options={searchOptions}
+              getOptionLabel={(option) => typeof option === "string" ? option : `${option.ticker} - ${option.name}`}
+              filterOptions={(x) => x}
+              onInputChange={(event, newInputValue) => setSearchInputVal(newInputValue)}
+              onChange={(event, newValue) => {
+                if (newValue) {
+                  const selectedTicker = typeof newValue === "string" ? newValue : newValue.ticker;
+                  setSelectedSymbol(selectedTicker);
+                  setStatusMessage(null);
+                }
+              }}
+              loading={loadingSearch}
+              renderInput={(params) => {
+                  const { slotProps: ps, InputProps, inputProps, InputLabelProps, ...rest } = params;
+                  const inputSlot = ps?.input ?? InputProps;
+                  const htmlInputSlot = ps?.htmlInput ?? inputProps;
+                  const labelSlot = ps?.inputLabel ?? InputLabelProps;
+
+                  return (
+                    <TextField
+                      {...rest}
+                      placeholder="Ej: NVDA, Apple, Tesla..."
+                      size="small"
+                      slotProps={{
+                        ...ps,
+                        input: {
+                          ...inputSlot,
+                          startAdornment: (
+                            <>
+                              <SearchIcon sx={{ color: "gray", mr: 1, fontSize: 20 }} />
+                              {inputSlot?.startAdornment}
+                            </>
+                          ),
+                          endAdornment: (
+                            <>
+                              {loadingSearch ? <CircularProgress color="inherit" size={18} /> : null}
+                              {inputSlot?.endAdornment}
+                            </>
+                          )
+                        },
+                        htmlInput: htmlInputSlot,
+                        inputLabel: labelSlot
+                      }}
+                      sx={{
+                        input: { color: "white", fontWeight: 700 },
+                        bgcolor: "#0b0e11",
+                        borderRadius: 1,
+                        "& .MuiOutlinedInput-notchedOutline": { borderColor: "#1c2025" }
+                      }}
+                    />
+                  );
+                }}
+            />
+          </Paper>
+        </Grid>
+
+        {/* Accesos Rápidos: Más Operados */}
+        <Grid size={{ xs: 12, md: 7 }}>
+          <Paper sx={{ bgcolor: "#15181e", border: "1px solid #1c2025", borderRadius: 2, p: 2.5 }}>
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 1.5 }}>
+              <TrendingUpIcon sx={{ color: "#4caf50", fontSize: 18 }} />
+              <Typography variant="subtitle2" fontWeight={700} color="gray" sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}>
+                Más Operados (Selección Rápida)
+              </Typography>
+            </Stack>
+
+            <Grid container spacing={1.5}>
+              {POPULAR_TICKERS.map((item) => {
+                const isSelected = selectedSymbol === item.ticker;
+                return (
+                  <Grid size={{ xs: 6, sm: 4, md: 2 }} key={item.ticker}>
+                    <Card
+                      onClick={() => {
+                        setSelectedSymbol(item.ticker);
+                        setStatusMessage(null);
+                      }}
+                      sx={{
+                        bgcolor: isSelected ? "rgba(33, 150, 243, 0.12)" : "#0b0e11",
+                        border: `1px solid ${isSelected ? "#2196f3" : "#1c2025"}`,
+                        borderRadius: 1.5,
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                        "&:hover": { borderColor: "#2196f3", bgcolor: "rgba(33, 150, 243, 0.08)" }
+                      }}
+                    >
+                      <CardContent sx={{ p: "10px !important", textAlign: "center" }}>
+                        <Typography variant="body2" fontWeight={800} color={isSelected ? "#2196f3" : "white"}>
+                          {item.ticker}
+                        </Typography>
+                        <Typography variant="caption" color="gray" noWrap display="block" sx={{ fontSize: "0.68rem" }}>
+                          {item.name}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          </Paper>
+        </Grid>
+      </Grid>
+
+      {/* Gráfico y Formulario de Compra / Venta */}
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 7, lg: 8 }}>
-          <Card sx={{ backgroundColor: "#15181e", height: "100%" }}>
+          <Card sx={{ backgroundColor: "#15181e", height: "100%", border: "1px solid #1c2025" }}>
             <CardContent>
               <Typography variant="h5" fontWeight={700}>
                 {currentAsset?.name} ({currentAsset?.symbol})
@@ -178,9 +346,10 @@ function TradingPage() {
                 Mercado Real • Widget Oficial TradingView (Gráfico de Líneas en Tiempo Real)
               </Typography>
               
-              {currentAsset && (
+              {selectedSymbol && (
                 <TradingChart 
-                  symbol={currentAsset.symbol} 
+                  key={selectedSymbol} 
+                  symbol={selectedSymbol} 
                 />
               )}
             </CardContent>
@@ -188,7 +357,7 @@ function TradingPage() {
         </Grid>
 
         <Grid size={{ xs: 12, md: 5, lg: 4 }}>
-          <Card sx={{ backgroundColor: "#15181e" }}>
+          <Card sx={{ backgroundColor: "#15181e", border: "1px solid #1c2025" }}>
             <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
               <Tabs 
                 value={action} 
@@ -216,7 +385,7 @@ function TradingPage() {
                     disabled={loading}
                     fullWidth
                   >
-                    {assets.map((asset) => (
+                    {availableOptions.map((asset) => (
                       <MenuItem key={asset.symbol} value={asset.symbol}>
                         {asset.symbol} - {asset.name}
                       </MenuItem>
