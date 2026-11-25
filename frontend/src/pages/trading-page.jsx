@@ -6,7 +6,7 @@ import {
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom"; 
 import { executeTrade } from "../services/portfolio-service";
-import { searchAssets } from "../services/market-service";
+import { searchAssets, getAssetDetail } from "../services/market-service";
 import { useMarket } from "../context/market-context.jsx";
 import TradingChart from "../components/dashboard/trading-chart";
 import PageHeader from "../components/layout/page-header";
@@ -76,12 +76,46 @@ function TradingPage() {
     };
   }, [searchInputVal]);
 
-  // Buscamos en el contexto o generamos un fallback dinámico si el ticker proviene de la búsqueda global
+  const [fetchedAsset, setFetchedAsset] = useState(null);
+
+  // Cuando cambia el activo seleccionado, si no está en la lista de activos iniciales, consultamos al backend
+  useEffect(() => {
+    let isSubscribed = true;
+    const inContext = assets.find(a => a.symbol === selectedSymbol);
+    
+    if (inContext) {
+      setFetchedAsset(null);
+      return;
+    }
+
+    const fetchDetail = async () => {
+      try {
+        const detail = await getAssetDetail(selectedSymbol);
+        if (isSubscribed && detail && detail.price) {
+          setFetchedAsset({
+            symbol: detail.ticker,
+            name: detail.name || detail.ticker,
+            exchange: detail.exchange,
+            currentPrice: parseFloat(detail.price)
+          });
+        }
+      } catch {
+        // En caso de falla de red, conserva último estado
+      }
+    };
+
+    fetchDetail();
+    return () => {
+      isSubscribed = false;
+    };
+  }, [selectedSymbol, assets]);
+
+  // Buscamos en el contexto o en el detalle consultado
   const foundAsset = assets.find(a => a.symbol === selectedSymbol);
-  const currentAsset = foundAsset || {
+  const currentAsset = foundAsset || fetchedAsset || {
     symbol: selectedSymbol,
     name: selectedSymbol,
-    currentPrice: 150.00
+    currentPrice: 0.00
   };
 
   // Garantizamos que el Select del formulario siempre contenga la opción seleccionada aunque venga de la búsqueda externa
@@ -349,7 +383,8 @@ function TradingPage() {
               {selectedSymbol && (
                 <TradingChart 
                   key={selectedSymbol} 
-                  symbol={selectedSymbol} 
+                  symbol={selectedSymbol}
+                  exchange={currentAsset?.exchange}
                 />
               )}
             </CardContent>

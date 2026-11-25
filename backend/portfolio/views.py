@@ -108,9 +108,20 @@ def get_stock_history(request, symbol):
                 'volume': int(row['Volume'])
             })
 
-        info = ticker.info
+        info = ticker.info or {}
         company_name = info.get('longName', symbol)
-        current_price = round(info.get('currentPrice', history_data[-1]['close']), 2)
+        
+        # fast_info o último valor del historial si el mercado cerró
+        fast_info = getattr(ticker, 'fast_info', None)
+        fast_last = getattr(fast_info, 'last_price', None) if fast_info else None
+        
+        raw_price = (
+            fast_last or
+            info.get('currentPrice') or
+            info.get('regularMarketPrice') or
+            (history_data[-1]['close'] if history_data else None)
+        )
+        current_price = round(float(raw_price), 2) if raw_price else 0.0
 
         return JsonResponse({
             'symbol': symbol.upper(),
