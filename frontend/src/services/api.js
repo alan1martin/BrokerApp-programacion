@@ -23,4 +23,22 @@ api.interceptors.request.use(
   }
 );
 
+// Interceptor de respuesta: auto-recuperación y purga segura ante expiración de sesión (401)
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      const isAuthRoute = window.location.pathname === "/login" || window.location.pathname === "/register";
+      if (!isAuthRoute) {
+        // Limpiamos credenciales caducadas
+        localStorage.removeItem("access");
+        localStorage.removeItem("refresh");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;
