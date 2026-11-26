@@ -2,6 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions, serializers
 from django.shortcuts import get_object_or_404
+from django.db import transaction
 from decimal import Decimal
 import yfinance as yf
 
@@ -211,78 +212,78 @@ class ExecuteTradeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        portfolio = get_object_or_404(Portfolio, user=request.user)
-        
         serializer = TransactionSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-        symbol = serializer.validated_data['symbol'].upper()
-        trade_type = serializer.validated_data['transaction_type']
-        quantity = Decimal(str(serializer.validated_data['quantity']))
-        price = Decimal(str(serializer.validated_data['price']))
 
-        trade_total_cost = quantity * price
-
-        position, _ = Position.objects.get_or_create(
-            portfolio=portfolio,
-            symbol=symbol,
-            defaults={'quantity': Decimal('0.00'), 'average_price': Decimal('0.00')}
-        )
-
-        if trade_type == 'BUY':
-            if portfolio.cash_balance < trade_total_cost:
-                return Response(
-                    {"error": f"Saldo insuficiente. Necesitás ${trade_total_cost:,.2f} y tenés ${portfolio.cash_balance:,.2f} en cuenta."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+        # Envoltorio atómico con bloqueo pesimista contra Race Conditions
+        with transaction.atomic():
+            portfolio = Portfolio.objects.select_for_update().get(user=request.user)
             
-            current_total_cost = position.quantity * position.average_price
-            new_trade_cost = quantity * price
-            
-            position.quantity += quantity
-            position.average_price = (current_total_cost + new_trade_cost) / position.quantity
-            position.save()
+            symbol = serializer.validated_data['symbol'].upper()
+            trade_type = serializer.validated_data['transaction_type']
+            quantity = Decimal(str(serializer.validated_data['quantity']))
+            price = Decimal(str(serializer.validated_data['price']))
 
-            portfolio.cash_balance -= trade_total_cost
-            portfolio.save()
+            trade_total_cost = quantity * price
 
-        elif trade_type == 'SELL':
-            if position.quantity < quantity:
-                return Response(
-                    {"error": f"No tenés suficientes unidades de {symbol}. Tenés {position.quantity} y querés vender {quantity}."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            position.quantity -= quantity
-            
-            if position.quantity == 0:
-                position.delete()
-            else:
+            position, _ = Position.objects.select_for_update().get_or_create(
+                portfolio=portfolio,
+                symbol=symbol,
+                defaults={'quantity': Decimal('0.00'), 'average_price': Decimal('0.00')}
+            )
+
+            if trade_type == 'BUY':
+                if portfolio.cash_balance < trade_total_cost:
+                    return Response(
+                        {"error": f"Saldo insuficiente. Necesitás ${trade_total_cost:,.2f} y tenés ${portfolio.cash_balance:,.2f} en cuenta."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                current_total_cost = position.quantity * position.average_price
+                new_trade_cost = quantity * price
+                
+                position.quantity += quantity
+                position.average_price = (current_total_cost + new_trade_cost) / position.quantity
                 position.save()
 
-            portfolio.cash_balance += trade_total_cost
-            portfolio.save()
+                portfolio.cash_balance -= trade_total_cost
+                portfolio.save()
 
-        serializer.save(portfolio=portfolio, symbol=symbol)
+            elif trade_type == 'SELL':
+                if position.quantity < quantity:
+                    return Response(
+                        {"error": f"No tenés suficientes unidades de {symbol}. Tenés {position.quantity} y querés vender {quantity}."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                position.quantity -= quantity
+                
+                if position.quantity == 0:
+                    position.delete()
+                else:
+                    position.save()
 
-        return Response({
-            "message": f"Orden de {trade_type} ejecutada con éxito.",
-            "cash": str(portfolio.cash_balance),
-            "position": {
-                "symbol": symbol,
-                "current_quantity": str(position.quantity if position.id else 0),
-                "average_price": str(position.average_price if position.id else 0)
-            }
-        }, status=status.HTTP_201_CREATED)
+                portfolio.cash_balance += trade_total_cost
+                portfolio.save()
+
+            serializer.save(portfolio=portfolio, symbol=symbol)
+
+            return Response({
+                "message": f"Orden de {trade_type} ejecutada con éxito.",
+                "cash": str(portfolio.cash_balance),
+                "position": {
+                    "symbol": symbol,
+                    "current_quantity": str(position.quantity if position.id else 0),
+                    "average_price": str(position.average_price if position.id else 0)
+                }
+            }, status=status.HTTP_201_CREATED)
 
 
 class DepositWithdrawCashView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     
     def post(self, request):
-        portfolio = get_object_or_404(Portfolio, user=request.user)
-        
         action_type = request.data.get('transaction_type')
         amount_str = request.data.get('amount')
         
@@ -296,37 +297,41 @@ class DepositWithdrawCashView(APIView):
         except Exception:
             return Response({"error": "Monto inválido."}, status=status.HTTP_400_BAD_REQUEST)
 
-        if action_type == 'DEPOSIT':
-            portfolio.cash_balance += amount
-            db_type = 'DEP'
-            msg = f"Depósito exitoso. Se sumaron ${amount:,.2f} a tu cuenta."
-        
-        elif action_type == 'WITHDRAW':
-            if portfolio.cash_balance < amount:
-                return Response(
-                    {"error": f"Fondo insuficiente. Tenés ${portfolio.cash_balance:,.2f}."}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            portfolio.cash_balance -= amount
-            db_type = 'WIT'
-            msg = f"Retiro exitoso. Se extrajeron ${amount:,.2f} de tu cuenta."
-        else:
-            return Response({"error": "Tipo de operación inválida."}, status=status.HTTP_400_BAD_REQUEST)
+        # Envoltorio atómico con bloqueo pesimista contra Race Conditions en movimientos de caja
+        with transaction.atomic():
+            portfolio = Portfolio.objects.select_for_update().get(user=request.user)
 
-        portfolio.save()
+            if action_type == 'DEPOSIT':
+                portfolio.cash_balance += amount
+                db_type = 'DEP'
+                msg = f"Depósito exitoso. Se sumaron ${amount:,.2f} a tu cuenta."
+            
+            elif action_type == 'WITHDRAW':
+                if portfolio.cash_balance < amount:
+                    return Response(
+                        {"error": f"Fondo insuficiente. Tenés ${portfolio.cash_balance:,.2f}."}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                portfolio.cash_balance -= amount
+                db_type = 'WIT'
+                msg = f"Retiro exitoso. Se extrajeron ${amount:,.2f} de tu cuenta."
+            else:
+                return Response({"error": "Tipo de operación inválida."}, status=status.HTTP_400_BAD_REQUEST)
 
-        Transaction.objects.create(
-            portfolio=portfolio,
-            symbol="CASH",  
-            transaction_type=db_type, 
-            quantity=Decimal('1.00'),
-            price=amount
-        )
+            portfolio.save()
 
-        return Response({
-            "message": msg,
-            "cash": str(portfolio.cash_balance)
-        }, status=status.HTTP_200_OK)
+            Transaction.objects.create(
+                portfolio=portfolio,
+                symbol="CASH",  
+                transaction_type=db_type, 
+                quantity=Decimal('1.00'),
+                price=amount
+            )
+
+            return Response({
+                "message": msg,
+                "cash": str(portfolio.cash_balance)
+            }, status=status.HTTP_200_OK)
 
 
 class AssetCompositionView(APIView):

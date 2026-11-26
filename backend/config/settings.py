@@ -36,6 +36,13 @@ else:
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # ==============================================================================
+# CABECERAS DE SEGURIDAD ESTÁNDAR OWASP PARA BROKERS FINANCIEROS
+# ==============================================================================
+X_FRAME_OPTIONS = 'DENY'
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+
+# ==============================================================================
 # DEFINICIÓN DE APLICACIONES Y MIDDLEWARES
 # ==============================================================================
 INSTALLED_APPS = [
@@ -130,6 +137,14 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '60/minute',   # Previene fuerza bruta en endpoints públicos (login/register)
+        'user': '300/minute',  # Permite navegación fluida sin abusos
+    },
 }
 
 # Clave JWT dedicada para encriptar contraseñas/tokens
