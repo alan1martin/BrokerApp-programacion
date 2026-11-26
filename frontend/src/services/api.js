@@ -5,11 +5,11 @@ import axios from "axios";
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const api = axios.create({
-  // Aseguramos de manera estricta que todas las peticiones lleven el prefijo /api
   baseURL: `${BASE_URL.replace(/\/$/, "")}/api`,
+  withCredentials: true, // Envío automático de cookies HttpOnly seguras
 });
 
-// Interceptor crítico: Agrega el token JWT a cada petición para evitar el 401/403/404
+// Interceptor de solicitud: Mantiene fallback a Authorization header si existe en localStorage
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("access");
@@ -30,7 +30,7 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       const isAuthRoute = window.location.pathname === "/login" || window.location.pathname === "/register";
       if (!isAuthRoute) {
-        // Limpiamos credenciales caducadas
+        // Limpiamos datos caducados
         localStorage.removeItem("access");
         localStorage.removeItem("refresh");
         localStorage.removeItem("user");

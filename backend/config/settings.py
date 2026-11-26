@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
+    'django_extensions', # Permite runserver_plus con SSL HTTPS local
     # Apps locales
     'portfolio',
     'market',
@@ -75,6 +76,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware', # Debe estar lo más arriba posible
     'django.middleware.security.SecurityMiddleware',         
+    'config.middleware.SecurityHeadersMiddleware', # Blindaje OWASP (CSP, Permissions-Policy, Referrer-Policy)
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',             
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -143,6 +145,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # ==============================================================================
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        'config.authentication.JWTCookieAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
@@ -173,6 +176,9 @@ SIMPLE_JWT = {
 # ==============================================================================
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "https://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://127.0.0.1:5173",
     "https://app4.academia.ar",
 ]
 
@@ -180,6 +186,9 @@ CSRF_TRUSTED_ORIGINS = [
     "https://app4.academia.ar",
     "https://api.app4.academia.ar",
     "http://localhost:5173",
+    "https://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://127.0.0.1:5173",
 ]
 
 CORS_ALLOW_CREDENTIALS = True

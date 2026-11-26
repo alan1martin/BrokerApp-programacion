@@ -10,6 +10,9 @@ coverage/
 .env.development
 .env.production
 *.log
+*.pem
+*.key
+*.crt
 
 # ======================
 # Backend
