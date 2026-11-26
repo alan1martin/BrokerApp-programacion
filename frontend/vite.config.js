@@ -19,5 +19,6 @@ export default defineConfig({
     // Optimización para el Nginx de la academia
     outDir: 'dist',
     assetsDir: 'assets',
+    sourcemap: false,
   }
 })

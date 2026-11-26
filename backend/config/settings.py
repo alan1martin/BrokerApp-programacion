@@ -42,6 +42,17 @@ X_FRAME_OPTIONS = 'DENY'
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 
+# Flags de Cookies Seguras contra XSS y Secuestro de Sesión
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False  # DRF requiere leer el token para CSRF en formularios si aplica
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+# En producción detrás de HTTPS (Nginx / Cloudflare)
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
 # ==============================================================================
 # DEFINICIÓN DE APLICACIONES Y MIDDLEWARES
 # ==============================================================================
