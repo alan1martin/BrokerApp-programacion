@@ -27,3 +27,15 @@ export async function getCurrentUserProfile() {
   const response = await api.get("user/me/");
   return response.data;
 }
+
+export async function logoutUser() {
+  try {
+    await api.post("logout/");
+  } catch (err) {
+    console.error("Error al cerrar sesión:", err);
+  } finally {
+    localStorage.removeItem("user");
+    localStorage.removeItem("access");
+    localStorage.removeItem("refresh");
+  }
+}

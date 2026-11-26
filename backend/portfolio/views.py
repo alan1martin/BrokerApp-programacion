@@ -72,6 +72,40 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == status.HTTP_200_OK and "access" in response.data:
+            access_token = response.data["access"]
+            refresh_token = response.data.get("refresh")
+            
+            # Ajuste de flags para local (HTTP) vs produccion (HTTPS)
+            from django.conf import settings
+            is_secure = not settings.DEBUG
+
+            # Seteamos la Cookie HttpOnly para el Access Token (1 hora)
+            response.set_cookie(
+                key="access_token",
+                value=access_token,
+                max_age=3600,
+                httponly=True,
+                secure=is_secure,
+                samesite="Lax",
+                path="/"
+            )
+
+            # Seteamos la Cookie HttpOnly para el Refresh Token (7 días)
+            if refresh_token:
+                response.set_cookie(
+                    key="refresh_token",
+                    value=refresh_token,
+                    max_age=7 * 86400,
+                    httponly=True,
+                    secure=is_secure,
+                    samesite="Lax",
+                    path="/"
+                )
+        return response
+
 
 # ================= PERFIL DE USUARIO LOGUEADO =================
 @api_view(['GET'])
@@ -212,6 +246,15 @@ class ExecuteTradeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
+        # Blindaje Fintech: Control de Idempotencia opcional/recomendado
+        idempotency_key = request.headers.get("Idempotency-Key") or request.data.get("idempotency_key")
+        if idempotency_key:
+            from django.core.cache import cache
+            cache_key = f"idempotency_trade_{request.user.id}_{idempotency_key}"
+            cached_response = cache.get(cache_key)
+            if cached_response:
+                return Response(cached_response, status=status.HTTP_200_OK)
+
         serializer = TransactionSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -269,7 +312,7 @@ class ExecuteTradeView(APIView):
 
             serializer.save(portfolio=portfolio, symbol=symbol)
 
-            return Response({
+            resp_data = {
                 "message": f"Orden de {trade_type} ejecutada con éxito.",
                 "cash": str(portfolio.cash_balance),
                 "position": {
@@ -277,7 +320,13 @@ class ExecuteTradeView(APIView):
                     "current_quantity": str(position.quantity if position.id else 0),
                     "average_price": str(position.average_price if position.id else 0)
                 }
-            }, status=status.HTTP_201_CREATED)
+            }
+
+            if idempotency_key:
+                # Guardamos la respuesta procesada por 2 minutos para evitar compras duplicadas
+                cache.set(cache_key, resp_data, timeout=120)
+
+            return Response(resp_data, status=status.HTTP_201_CREATED)
 
 
 class DepositWithdrawCashView(APIView):
@@ -531,6 +580,19 @@ def get_portfolio_news(request):
         return Response({"error": f"Error interno: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+# ================= CIERRE DE SESIÓN SEGURO =================
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def logout_user(request):
+    """
+    Invalida las cookies seguras HttpOnly del cliente.
+    """
+    response = Response({'message': 'Sesión cerrada correctamente.'}, status=status.HTTP_200_OK)
+    response.delete_cookie('access_token', path='/')
+    response.delete_cookie('refresh_token', path='/')
+    return response
+
+
 # ================= FAVORITOS =================
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -568,7 +630,7 @@ def register_user(request):
         account_number = profile.account_number if profile else "CC-000000"
         full_name = profile.full_name if (profile and profile.full_name) else (user.get_full_name() or user.username)
 
-        return Response({
+        response = Response({
             'message': 'Usuario registrado con éxito.',
             'access': str(refresh.access_token),
             'refresh': str(refresh),
@@ -583,4 +645,27 @@ def register_user(request):
                 'is_staff': user.is_staff
             }
         }, status=status.HTTP_201_CREATED)
+
+        # Inyectamos cookies seguras HttpOnly al registrarse
+        from django.conf import settings
+        is_secure = not settings.DEBUG
+        response.set_cookie(
+            key="access_token",
+            value=str(refresh.access_token),
+            max_age=3600,
+            httponly=True,
+            secure=is_secure,
+            samesite="Lax",
+            path="/"
+        )
+        response.set_cookie(
+            key="refresh_token",
+            value=str(refresh),
+            max_age=7 * 86400,
+            httponly=True,
+            secure=is_secure,
+            samesite="Lax",
+            path="/"
+        )
+        return response
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
